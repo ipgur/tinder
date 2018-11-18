@@ -1,0 +1,52 @@
+---
+swagger: "2.0"
+info:
+  version: "1"
+  title: "API"
+paths:
+  /echo:
+    post:
+      operationId: "echo"
+      consumes:
+      - "text/plain"
+      produces:
+      - "text/plain"
+      parameters: []
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "string"
+  /raw:
+    put:
+      operationId: "raw"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
+  /test/{id}:
+    get:
+      operationId: "test"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "limit"
+        in: "query"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "Content-Length"
+        in: "header"
+        required: false
+        type: "integer"
+        format: "int64"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "string"
