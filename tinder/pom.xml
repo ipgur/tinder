@@ -75,6 +75,13 @@
       <artifactId>javax.inject</artifactId>
       <version>1</version>
     </dependency>
+    <!-- This is required for http2 -->
+    <!-- version must match the one from spark's inclusion of jetty -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-alpn-conscrypt-server</artifactId>
+      <version>9.4.12.v20180830</version>
+    </dependency>
   </dependencies>
 
 </project>

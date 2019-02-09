@@ -9,7 +9,6 @@
       <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
-        <version>3.1.8</version>
         <executions>
           <execution>
             <id>create-swagger-yaml</id>
@@ -37,7 +36,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.1.1</version>
         <executions>
           <execution>
             <id>unpack-swagger-ui</id>
@@ -61,7 +59,6 @@
       <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
-        <version>1.5.3</version>
         <executions>
           <execution>
             <id>replace-swagger-ui</id>
@@ -83,7 +80,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.1.0</version>
         <executions>
           <execution>
             <id>copy-swagger</id>
@@ -105,7 +101,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -117,7 +112,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.1</version>
         <executions>
           <execution>
             <phase>package</phase>
