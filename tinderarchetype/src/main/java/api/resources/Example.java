@@ -2,6 +2,8 @@ package api.resources;
 
 import api.model.Bean;
 import api.model.ImmutableBean;
+import api.services.ServiceExample;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -19,6 +21,13 @@ import tinder.core.ResourceEvents;
 @Resource
 @Path("/")
 public class Example implements ResourceEvents {
+
+  @Inject ServiceExample serviceExample;
+
+  @Inject
+  public Example() {
+    ResourceExample.bind(this);
+  }
 
   @GET
   @Path("/test/{id}")
