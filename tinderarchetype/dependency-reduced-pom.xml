@@ -1,47 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <packaging>jar</packaging>
-
   <groupId>archetype</groupId>
   <artifactId>tinder-archetype</artifactId>
   <version>1.0-SNAPSHOT</version>
-
-  <properties>
-
-    <!--  -->
-    <api.name>API</api.name>
-    <api.version>1</api.version>
-    <api.resourcepackage>api.resources</api.resourcepackage>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-
-    <swagger-ui.version>3.17.0</swagger-ui.version>
-
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>tinder</groupId>
-      <artifactId>tinder-core</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>tinder</groupId>
-      <artifactId>tinder-processors</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <optional>true</optional>
-    </dependency>
-  </dependencies>
-
   <build>
     <plugins>
-      <!-- Build the swagger yaml statically -->
       <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
+        <version>3.1.8</version>
+        <executions>
+          <execution>
+            <id>create-swagger-yaml</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <apiSources>
             <apiSource>
@@ -57,19 +34,10 @@
             </apiSource>
           </apiSources>
         </configuration>
-        <executions>
-          <execution>
-            <id>create-swagger-yaml</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
-        <!-- Download Swagger UI webjar. -->
         <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <id>unpack-swagger-ui</id>
@@ -91,9 +59,9 @@
         </executions>
       </plugin>
       <plugin>
-        <!-- Replace the OpenAPI specification example URL with the local one. -->
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
         <executions>
           <execution>
             <id>replace-swagger-ui</id>
@@ -115,6 +83,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>copy-swagger</id>
@@ -135,8 +104,8 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -147,8 +116,8 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -163,5 +132,13 @@
       </plugin>
     </plugins>
   </build>
-
+  <properties>
+    <swagger-ui.version>3.17.0</swagger-ui.version>
+    <api.name>API</api.name>
+    <api.version>1</api.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <api.resourcepackage>api.resources</api.resourcepackage>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
 </project>
