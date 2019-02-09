@@ -18,6 +18,8 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
+    <swagger-ui.version>3.17.0</swagger-ui.version>
+
   </properties>
 
   <dependencies>
@@ -36,6 +38,7 @@
 
   <build>
     <plugins>
+      <!-- Build the swagger yaml statically -->
       <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
@@ -57,10 +60,81 @@
         </configuration>
         <executions>
           <execution>
-            <phase>compile</phase>
+            <id>create-swagger-yaml</id>
+            <phase>prepare-package</phase>
             <goals>
               <goal>generate</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- Download Swagger UI webjar. -->
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>unpack-swagger-ui</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.webjars</groupId>
+                  <artifactId>swagger-ui</artifactId>
+                  <version>${swagger-ui.version}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/swagger-ui</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- Replace the OpenAPI specification example URL with the local one. -->
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <id>replace-swagger-ui</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <file>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}/index.html</file>
+          <replacements>
+            <replacement>
+              <token>http://petstore.swagger.io/v2/swagger.json</token>
+              <value>/swagger.yaml</value>
+            </replacement>
+          </replacements>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>copy-swagger</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/docs</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
