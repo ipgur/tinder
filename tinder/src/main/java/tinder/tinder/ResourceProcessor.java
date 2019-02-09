@@ -177,6 +177,22 @@ public class ResourceProcessor extends AbstractProcessor {
 
   private MethodSpec.Builder methodRoute(
       MethodSpec.Builder bindMethod, Element method, String httpMethod, String path) {
+
+    // Check if a transformer was specified, otherwise we make our own.
+    Object transformerClazz;
+    Converter converterAnn = method.getAnnotation(Converter.class);
+    if (converterAnn != null) {
+      // Because of some crap thing/impl, cannot get classes out of annotations and need a trick for it...
+      TypeMirror value = null;
+      try {
+        transformerClazz = converterAnn.value();
+      } catch (MirroredTypeException mte) {
+        transformerClazz = TypeName.get(mte.getTypeMirror());
+      }
+    } else {
+      transformerClazz = JsonTransformer.class;
+    }
+
     bindMethod = bindMethod
         .addCode("\n")
         .addComment(httpMethod.toUpperCase() + " " + path)
@@ -184,7 +200,7 @@ public class ResourceProcessor extends AbstractProcessor {
         .addCode(CodeBlock.builder()
             .add(callBlock(method))
             .build())
-        .addCode("});\n\n");
+        .addCode("}, new $T());\n\n", transformerClazz);
     return bindMethod;
   }
 

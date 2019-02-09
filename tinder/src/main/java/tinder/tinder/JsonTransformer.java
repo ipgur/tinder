@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Raffaele Ragni.
+ * Copyright 2019 Raffaele Ragni.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package tinder.tinder;
 
-import java.lang.annotation.Documented;
-import static java.lang.annotation.ElementType.TYPE;
-import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import java.lang.annotation.Target;
+import com.google.gson.Gson;
+import spark.ResponseTransformer;
 
 /**
- * Which type converter to use for parameter inputs that implements TypeConverter from Tinder
+ * Default json transformer (gson)
+ *
  * @author Raffaele Ragni
  */
-@Target({TYPE})
-@Retention(RUNTIME)
-@Documented
-public @interface Converter {
-  Class<? extends TypeConverter> value();
+public class JsonTransformer implements ResponseTransformer {
+
+  private final Gson gson = new Gson();
+
+  @Override
+  public String render(Object model) {
+    return gson.toJson(model);
+  }
 }

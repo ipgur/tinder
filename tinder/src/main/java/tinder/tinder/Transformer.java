@@ -20,14 +20,15 @@ import static java.lang.annotation.ElementType.TYPE;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
+import spark.ResponseTransformer;
 
 /**
- * Which type converter to use for parameter inputs that implements TypeConverter from Tinder
+ * Which transformer to use for output that implements ResponseTransformer from Spark.
  * @author Raffaele Ragni
  */
 @Target({TYPE})
 @Retention(RUNTIME)
 @Documented
-public @interface Converter {
-  Class<? extends TypeConverter> value();
+public @interface Transformer {
+  Class<? extends ResponseTransformer> value();
 }
