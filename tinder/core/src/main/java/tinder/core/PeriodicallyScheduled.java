@@ -52,7 +52,7 @@ public @interface PeriodicallyScheduled {
    * When false, it waits the amount of time between job start and job start.
    * @return
    */
-  boolean waitBeforeStarting() default true;
+  boolean waitBeforeRestart() default true;
 
   /**
    * Either starts immediately then true, or wait the same amount before going the first time when false.

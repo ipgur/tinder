@@ -50,7 +50,7 @@ public class MyThing {
   // This is the case when you don't want to wait before running the 2nd runs.
   // waitBeforeStarting = false will trigger the method from start to start, as opposed from end to start in the default
   // value.
-  @PeriodicallyScheduled(value = 1, waitBeforeStarting = false)
+  @PeriodicallyScheduled(value = 1, waitBeforeRestart = false)
   public void doit2() {
     System.out.println("fixed rate, starts immediately");
   }

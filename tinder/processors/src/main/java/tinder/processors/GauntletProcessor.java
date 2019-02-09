@@ -99,7 +99,7 @@ public class GauntletProcessor extends AbstractProcessor {
     for (Element e : elements.getAllMembers((TypeElement) element)) {
       if (e.getAnnotation(PeriodicallyScheduled.class) != null) {
         PeriodicallyScheduled annotation = e.getAnnotation(PeriodicallyScheduled.class);
-        String methodName = annotation.waitBeforeStarting() ?  "scheduleWithFixedDelay" : "scheduleAtFixedRate";
+        String methodName = annotation.waitBeforeRestart() ?  "scheduleWithFixedDelay" : "scheduleAtFixedRate";
         long wait = annotation.value();
         long initialWait = annotation.immediateStart() ? 0 : wait;
         builder.addStatement("scheduler.$L(() -> source.$L(), $L, $L, $T.$L)",
