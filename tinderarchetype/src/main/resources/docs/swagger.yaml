@@ -49,4 +49,7 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/Bean"
+definitions:
+  Bean:
+    type: "object"

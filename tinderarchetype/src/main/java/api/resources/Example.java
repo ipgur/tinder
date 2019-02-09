@@ -1,6 +1,7 @@
 package api.resources;
 
-import static java.lang.String.format;
+import api.model.Bean;
+import api.model.ImmutableBean;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -22,14 +23,15 @@ public class Example implements ResourceEvents {
   @GET
   @Path("/test/{id}")
   @Produces("application/json")
-  public String test(
+  public Bean test(
       @PathParam("id") Long id,
       @QueryParam("limit") Long limit,
       @HeaderParam("Content-Length") Long contentLength) {
-    return format("{id: %d, limit: %d, length: %d}",
-            id,
-            limit,
-            contentLength);
+    return ImmutableBean.builder()
+        .id(id)
+        .limit(limit)
+        .length(contentLength)
+        .build();
   }
 
   @POST

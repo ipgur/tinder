@@ -1,9 +1,11 @@
 package api.model;
 
+import javax.annotation.Nullable;
 import org.immutables.value.Value.Immutable;
 
 @Immutable
 public interface Bean {
-  long id();
-  String name();
+  @Nullable Long id();
+  @Nullable Long limit();
+  @Nullable Long length();
 }

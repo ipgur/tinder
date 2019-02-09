@@ -52,17 +52,15 @@ public interface TypeConverter {
     // All the base java types have it.
     try {
       Method valueOf = clazz.getMethod("valueOf", String.class);
-      return (T) valueOf.invoke(clazz.getDeclaredConstructor().newInstance(), value);
+      return (T) valueOf.invoke(null, value);
     } catch (NoSuchMethodException
         | SecurityException
-        | InstantiationException
         | IllegalAccessException
         | IllegalArgumentException
         | InvocationTargetException ex) {
       // Warning or nothing?
+      throw new RuntimeException(ex);
     }
-
-    return null;
   }
 
 }
