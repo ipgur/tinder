@@ -21,7 +21,7 @@
               <compilerArgument>-proc:none</compilerArgument>
               <includes>
                 <include>tinder/processors/ResourceProcessor.java</include>
-                <include>tinder/processors/GauntletProcessor.java</include>
+                <include>tinder/processors/ScheduledProcessor.java</include>
               </includes>
             </configuration>
           </execution>

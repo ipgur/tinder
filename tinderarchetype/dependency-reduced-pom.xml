@@ -7,6 +7,29 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.dagger</groupId>
+              <artifactId>dagger-compiler</artifactId>
+              <version>2.21</version>
+            </path>
+            <path>
+              <groupId>org.immutables</groupId>
+              <artifactId>value</artifactId>
+              <version>2.7.5</version>
+            </path>
+            <path>
+              <groupId>tinder</groupId>
+              <artifactId>tinder-processors</artifactId>
+              <version>1.0-SNAPSHOT</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
         <executions>
@@ -127,12 +150,12 @@
     </plugins>
   </build>
   <properties>
-    <swagger-ui.version>3.17.0</swagger-ui.version>
-    <api.name>API</api.name>
     <api.version>1</api.version>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <swagger-ui.version>3.17.0</swagger-ui.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <api.name>API</api.name>
     <api.resourcepackage>api.resources</api.resourcepackage>
-    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 </project>

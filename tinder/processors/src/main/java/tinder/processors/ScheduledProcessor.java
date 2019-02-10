@@ -47,9 +47,9 @@ import tinder.core.PeriodicallyScheduled;
  */
 @SupportedAnnotationTypes("tinder.core.Scheduling")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class GauntletProcessor extends AbstractProcessor {
+public class ScheduledProcessor extends AbstractProcessor {
 
-  private static final Logger LOG = Logger.getLogger(GauntletProcessor.class.getName());
+  private static final Logger LOG = Logger.getLogger(ScheduledProcessor.class.getName());
 
   @Override
   public boolean process(
@@ -61,7 +61,7 @@ public class GauntletProcessor extends AbstractProcessor {
         try {
           generateSchedulerFor(element);
         } catch (IOException ex) {
-          Logger.getLogger(GauntletProcessor.class.getName()).log(Level.SEVERE, null, ex);
+          Logger.getLogger(ScheduledProcessor.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
     }
