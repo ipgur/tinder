@@ -20,6 +20,8 @@
 
     <swagger-ui.version>3.17.0</swagger-ui.version>
 
+    <docker.image>${project.groupId}/${project.artifactId}</docker.image>
+
   </properties>
 
   <dependencies>
@@ -178,6 +180,34 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- This builds and deploys a docker image -->
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build</id>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>push</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>push</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <repository>${docker.image}</repository>
+          <tag>${project.version}</tag>
+          <buildArgs>
+            <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+          </buildArgs>
+        </configuration>
       </plugin>
     </plugins>
   </build>
