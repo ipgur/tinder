@@ -148,6 +148,14 @@
                 <resource>
                   <directory>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}</directory>
                   <filtering>true</filtering>
+                  <includes>
+                    <include>**/index.html</include>
+                    <include>**/swagger-ui.css</include>
+                    <include>**/favicon-32x32.png</include>
+                    <include>**/favicon-16x16.png</include>
+                    <include>**/swagger-ui-bundle.js</include>
+                    <include>**/swagger-ui-standalone-preset.js</include>
+                  </includes>
                 </resource>
               </resources>
             </configuration>
