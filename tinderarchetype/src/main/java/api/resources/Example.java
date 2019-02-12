@@ -1,8 +1,8 @@
 package api.resources;
 
-import api.model.Bean;
 import api.model.ImmutableBean;
 import api.services.ServiceExample;
+import io.swagger.annotations.ApiOperation;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,7 +32,10 @@ public class Example implements ResourceEvents {
   @GET
   @Path("/test/{id}")
   @Produces("application/json")
-  public Bean test(
+  @ApiOperation(value = "Returns a Bean",
+    notes = "Just a normal endpoint",
+    response = ImmutableBean.class)
+  public ImmutableBean test(
       @PathParam("id") Long id,
       @QueryParam("limit") Long limit,
       @HeaderParam("Content-Length") Long contentLength) {
