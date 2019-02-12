@@ -86,6 +86,14 @@
             </goals>
           </execution>
         </executions>
+        <dependencies>
+          <!-- This is needed later for the swagger pluging to generate, but it's not a good package of dependencies to carry (for jdk9+)-->
+          <dependency>
+            <groupId>javax.xml</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.1</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <!-- Download Swagger UI webjar. -->
