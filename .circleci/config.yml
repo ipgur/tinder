@@ -9,7 +9,7 @@ jobs:
       - restore_cache:
           keys:
             - dependencies
-      - setup_remote_docker
+      - setup_remote_docker:
           docker_layer_caching: true
       - run: cd tinder && ./mvnw install
       - run: cd tinderarchetype && ./mvnw package
