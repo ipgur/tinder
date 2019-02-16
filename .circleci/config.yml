@@ -17,3 +17,8 @@ jobs:
           paths:
             - ~/.m2
           key: dependencies
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
