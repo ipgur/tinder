@@ -6,4 +6,4 @@ jobs:
     steps:
       - checkout
       - run: cd tinder && ./mvnw install
-      - run: cd ../tinderarchetype && ./mvnw package
+      - run: cd tinderarchetype && ./mvnw package
