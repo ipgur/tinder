@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: adoptopenjdk/openjdk11
+    steps:
+      - checkout
+      - run: cd tinder
+      - run: ./mvnw install
+      - run: cd ../tinderarchetype
+      - run: ./mvnw package
