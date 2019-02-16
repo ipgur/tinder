@@ -5,7 +5,5 @@ jobs:
       - image: adoptopenjdk/openjdk11
     steps:
       - checkout
-      - run: cd tinder
-      - run: ./mvnw install
-      - run: cd ../tinderarchetype
-      - run: ./mvnw package
+      - run: cd tinder && ./mvnw install
+      - run: cd ../tinderarchetype && ./mvnw package
