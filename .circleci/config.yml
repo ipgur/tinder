@@ -5,20 +5,47 @@ jobs:
       - image: adoptopenjdk/openjdk11
     steps:
       - checkout
-      # Download and cache dependencies
       - restore_cache:
-          keys:
-            - dependencies
+          keys: [dependencies]
       - setup_remote_docker:
           docker_layer_caching: true
       - run: cd tinder && ./mvnw install
       - run: cd tinderarchetype && ./mvnw package
       - save_cache:
-          paths:
-            - ~/.m2
           key: dependencies
+          paths: [~/.m2]
+      - persist_to_workspace:
+          root: .
+          paths:
+            - tinderarchetype/target/*.jar
+  deploy:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install awscli
+          command: sudo apt-get install awscli
+      - run:
+          name: Sign into AWS ecr
+          command: $(aws ecr get-login --no-include-email --region ${AWS_DEFAULT_REGION})
+      - run:
+          name: Push image
+          command: |
+            export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/tinder/tinderarchetype:master"
+            docker build -t "${FULL_IMAGE_NAME}" --build-arg JAR_FILE=tinder-archetype-1.0-SNAPSHOT.jar tinderarchetype
+            docker push ${FULL_IMAGE_NAME}
+
 workflows:
   version: 2
-  build:
+#  build:
+#    jobs:
+#      - build
+  build_and_deploy:
     jobs:
       - build
+      - deploy:
+          context: aws
+          requires: [build]

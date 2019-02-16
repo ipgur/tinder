@@ -51,7 +51,7 @@ public class JDBILoader {
   public static Jdbi load(String name, Optional<String> username, Optional<String> password) {
 
     HikariConfig config = new HikariConfig();
-    
+
 
     config.setJdbcUrl("jdbc:mysql://localhost:3306/db?zeroDateTimeBehavior=round");
     config.setUsername("user");
@@ -65,5 +65,6 @@ public class JDBILoader {
 
     return Jdbi.create(ds);
   }
+
 
 }

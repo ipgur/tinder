@@ -22,7 +22,7 @@
               <version>2.7.5</version>
             </path>
             <path>
-              <groupId>tinder</groupId>
+              <groupId>com.github.raffaeleragni</groupId>
               <artifactId>tinder-processors</artifactId>
               <version>1.0-SNAPSHOT</version>
             </path>
