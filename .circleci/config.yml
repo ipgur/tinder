@@ -1,5 +1,16 @@
 version: 2
 jobs:
+  buildlib:
+    docker:
+      - image: adoptopenjdk/openjdk11
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [dependencies]
+      - run: cd tinder && ./mvnw clean install deploy -P release --settings ossrh_settings.xml
+      - save_cache:
+          key: dependencies
+          paths: [~/.m2]
   build:
     docker:
       - image: adoptopenjdk/openjdk11
@@ -9,7 +20,6 @@ jobs:
           keys: [dependencies]
       - setup_remote_docker:
           docker_layer_caching: true
-      - run: cd tinder && ./mvnw install
       - run: cd tinderarchetype && ./mvnw package
       - save_cache:
           key: dependencies
@@ -40,12 +50,12 @@ jobs:
 
 workflows:
   version: 2
-#  build:
-#    jobs:
-#      - build
   build_and_deploy:
     jobs:
-      - build
+      - buildlib:
+          context: mvn_central
+      - build:
+          requires: [buildlib]
       - deploy:
           context: aws
           requires: [build]
