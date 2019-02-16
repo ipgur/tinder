@@ -9,9 +9,9 @@
   <version>1.0-SNAPSHOT</version>
 
   <modules>
+    <module>patterns</module>
     <module>core</module>
     <module>processors</module>
-    <module>patterns</module>
   </modules>
 
   <properties>
@@ -101,5 +101,43 @@
       </plugin>
     </plugins>
   </build>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Raffaele Ragni</name>
+      <email>raffaele.ragni@gmail.com</email>
+      <organizationUrl>https://github.com/raffaeleragni</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>https://github.com/raffaeleragni/tinder.git</connection>
+    <url>https://github.com/raffaeleragni/tinder</url>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>tinder.wiki</id>
+      <url>https://github.com/raffaeleragni/wiki</url>
+    </site>
+
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+
+  </distributionManagement>
 
 </project>
