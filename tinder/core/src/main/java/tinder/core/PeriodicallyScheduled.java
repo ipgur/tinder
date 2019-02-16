@@ -35,13 +35,13 @@ public @interface PeriodicallyScheduled {
 
   /**
    * The amount to wait between job triggering.
-   * @return
+   * @return the wait time
    */
   long value() default 0;
 
   /**
    * Time unit of the value, defaults to SECONDS.
-   * @return
+   * @return the unit
    */
   TimeUnit unit() default SECONDS;
 
@@ -50,13 +50,13 @@ public @interface PeriodicallyScheduled {
    * This determines the difference between delay and rate.
    * When true, it waits the amount of time between job end and job start.
    * When false, it waits the amount of time between job start and job start.
-   * @return
+   * @return if to wait before
    */
   boolean waitBeforeRestart() default true;
 
   /**
    * Either starts immediately then true, or wait the same amount before going the first time when false.
-   * @return
+   * @return if to start immediately
    */
   boolean immediateStart() default true;
 }

@@ -24,50 +24,54 @@ import org.junit.jupiter.api.Test;
  * @author Raffaele Ragni
  */
 public class PollerTest {
-  
+
   @Test
   public void testPoller() throws InterruptedException {
-    
+
     Poller<Long> poller = Poller.poller(new LimitedSupply(5), i -> {});
-    
+
     Thread thread = new Thread(poller);
     thread.start();
     TimeUnit.MILLISECONDS.sleep(10);
     thread.interrupt();
     thread.join();
-    
+
     poller = Poller.poller(new LimitedSupply(5), i -> {})
         .min(10, TimeUnit.MILLISECONDS)
         .max(10, TimeUnit.MILLISECONDS);
-    
+
     thread = new Thread(poller);
     thread.start();
     TimeUnit.MILLISECONDS.sleep(100);
     thread.interrupt();
     thread.join();
   }
-  
+
   @Test
   public void testValidations() {
-    
+
     Poller.poller(new LimitedSupply(5), i -> {})
         .min(10, TimeUnit.MILLISECONDS)
         .max(10, TimeUnit.MILLISECONDS);
-    
+
+    Poller.poller(new LimitedSupply(5), i -> {})
+        .min(10)
+        .max(10);
+
     IllegalArgumentException ex;
-    
+
     ex = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Poller.poller(new LimitedSupply(5), i -> {})
           .min(-1, TimeUnit.MILLISECONDS);
     });
     Assertions.assertEquals("min can't be negative", ex.getMessage());
-    
+
     ex = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Poller.poller(new LimitedSupply(5), i -> {})
           .max(-1, TimeUnit.MILLISECONDS);
     });
     Assertions.assertEquals("max can't be negative", ex.getMessage());
-    
+
     ex = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Poller.poller(new LimitedSupply(5), i -> {})
           .min(10, TimeUnit.MILLISECONDS)

@@ -28,11 +28,17 @@
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-core</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.197</version>
     </dependency>
   </dependencies>
 
   <build>
+    <finalName>app</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -62,6 +68,7 @@
       <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
+        <version>3.1.8</version>
         <configuration>
           <apiSources>
             <apiSource>
@@ -98,6 +105,7 @@
       <plugin>
         <!-- Download Swagger UI webjar. -->
         <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <id>unpack-swagger-ui</id>
@@ -122,6 +130,7 @@
         <!-- Replace the OpenAPI specification example URL with the local one. -->
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
         <executions>
           <execution>
             <id>replace-swagger-ui</id>
@@ -143,6 +152,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>copy-swagger</id>
@@ -173,6 +183,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -185,6 +196,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -201,6 +213,7 @@
       <plugin>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-plugin</artifactId>
+        <version>1.4.10</version>
         <executions>
           <execution>
             <id>build</id>
@@ -220,9 +233,6 @@
         <configuration>
           <repository>${docker.image}</repository>
           <tag>${project.version}</tag>
-          <buildArgs>
-            <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-          </buildArgs>
         </configuration>
       </plugin>
     </plugins>

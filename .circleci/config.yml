@@ -2,18 +2,41 @@ version: 2
 jobs:
   buildlib:
     docker:
-      - image: adoptopenjdk/openjdk11
+      - image: adoptopenjdk/openjdk8
     steps:
       - checkout
       - restore_cache:
           keys: [dependencies]
-      - run: cd tinder && ./mvnw clean install deploy -P release --settings ossrh_settings.xml
+      - run: 
+          name: Build library
+          command: cd tinder && ./mvnw clean install
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+      - run:
+          name: Import GPG keys
+          command: |
+            apt-get update && apt-get install -y gpg
+            echo "Importing key..."
+            echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import --no-tty --batch --yes
+            echo "Importing trust..."
+            echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust --no-tty --batch --yes
+      - run: 
+          name: Publish library
+          command: cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/junit
       - save_cache:
           key: dependencies
           paths: [~/.m2]
-  build:
+  buildarchetype:
     docker:
-      - image: adoptopenjdk/openjdk11
+      - image: adoptopenjdk/openjdk8
     steps:
       - checkout
       - restore_cache:
@@ -28,7 +51,7 @@ jobs:
           root: .
           paths:
             - tinderarchetype/target/*.jar
-  deploy:
+  pusharchetype:
     machine:
       docker_layer_caching: true
     steps:
@@ -45,7 +68,7 @@ jobs:
           name: Push image
           command: |
             export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/tinder/tinderarchetype:master"
-            docker build -t "${FULL_IMAGE_NAME}" --build-arg JAR_FILE=tinder-archetype-1.0-SNAPSHOT.jar tinderarchetype
+            docker build -t "${FULL_IMAGE_NAME}" tinderarchetype
             docker push ${FULL_IMAGE_NAME}
 
 workflows:
@@ -54,8 +77,8 @@ workflows:
     jobs:
       - buildlib:
           context: mvn_central
-      - build:
+      - buildarchetype:
           requires: [buildlib]
-      - deploy:
+      - pusharchetype:
           context: aws
-          requires: [build]
+          requires: [buildarchetype]

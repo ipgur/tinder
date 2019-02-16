@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 /**
  * Dynamic poller that expands and contracts its waiting time based on the min and max parameters.
  * You can use 0 for min and/or max.
- * 
+ *
  * @param <T> the type passed between the producer and consumer.
- * 
+ *
  * @author Raffaele Ragni
  */
 public class Poller<T> implements Runnable {
@@ -36,7 +36,7 @@ public class Poller<T> implements Runnable {
   private final Consumer<T> consumer;
 
   private long currentWait;
-  
+
   public Poller(
       long min, long max,
       Supplier<Optional<T>> producer, Consumer<T> consumer) {
@@ -55,7 +55,7 @@ public class Poller<T> implements Runnable {
   public Poller min(long min) {
     return min(min, TimeUnit.SECONDS);
   }
-  
+
   /**
    * Sets the maximum time.
    * @param max number of seconds to wait maximally
@@ -64,7 +64,7 @@ public class Poller<T> implements Runnable {
   public Poller max(long max) {
     return max(max, TimeUnit.SECONDS);
   }
-  
+
   /**
    * Sets the minimum time.
    * @param min number of time units to wait minimally
@@ -78,7 +78,7 @@ public class Poller<T> implements Runnable {
     }
     return new Poller(min, max, producer, consumer);
   }
-  
+
   /**
    * Sets the maximum time.
    * @param max number of time units to wait maximally
@@ -95,7 +95,7 @@ public class Poller<T> implements Runnable {
     }
     return new Poller(min, max, producer, consumer);
   }
-  
+
   /**
    * Creates a new default Poller.
    * You will still need to specify a min+max to have wait times.
@@ -109,34 +109,22 @@ public class Poller<T> implements Runnable {
   public static <T> Poller<T> poller(Supplier<Optional<T>> producer, Consumer<T> consumer) {
     return new Poller(0L, 0L, producer, consumer);
   }
-  
+
   /**
    * Runs the poller.
    * It will keep running forever until the thread gets interrupted so it's recommended to put this inside a thread.
    */
   @Override
   public void run() {
-    
-    if (min < 0) {
-      throw new IllegalArgumentException("min can't be negative");
-    }
-    
-    if (max < 0) {
-      throw new IllegalArgumentException("max can't be negative");
-    }
-    
-    if (max < min) {
-      throw new IllegalArgumentException("max cannot be less than min");
-    }
-    
+
     // Reset to min
     pollIntervalReset();
-    
+
     while (!Thread.currentThread().isInterrupted()) {
-      
+
       Optional<T> polledValue = producer.get();
       polledValue.ifPresent(consumer);
-      
+
       // If a value was found, we reset the wait to the min because it means there could still be more data to process.
       // if no value was found though, we step tp max because no data is there and wait longer.
       if (polledValue.isPresent()) {
@@ -149,9 +137,9 @@ public class Poller<T> implements Runnable {
       // And now just wait...
       pollIntervalWait();
     }
-    
+
   }
-  
+
   private void pollIntervalWait() {
     if (currentWait > 0L) {
       try {
@@ -161,13 +149,13 @@ public class Poller<T> implements Runnable {
       }
     }
   }
-  
+
   private void pollIntervalReset() {
     currentWait = min;
   }
-  
+
   private void pollIntervalStepUp() {
     currentWait = max;
   }
-  
+
 }

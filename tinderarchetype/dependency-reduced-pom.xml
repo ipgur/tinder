@@ -5,6 +5,7 @@
   <artifactId>tinder-archetype</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
+    <finalName>app</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -32,6 +33,7 @@
       <plugin>
         <groupId>com.github.kongchen</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
+        <version>3.1.8</version>
         <executions>
           <execution>
             <id>create-swagger-yaml</id>
@@ -66,6 +68,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <id>unpack-swagger-ui</id>
@@ -89,6 +92,7 @@
       <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
         <executions>
           <execution>
             <id>replace-swagger-ui</id>
@@ -110,6 +114,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>copy-swagger</id>
@@ -139,6 +144,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -150,6 +156,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -165,6 +172,7 @@
       <plugin>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-plugin</artifactId>
+        <version>1.4.10</version>
         <executions>
           <execution>
             <id>build</id>
@@ -184,21 +192,18 @@
         <configuration>
           <repository>${docker.image}</repository>
           <tag>${project.version}</tag>
-          <buildArgs>
-            <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-          </buildArgs>
         </configuration>
       </plugin>
     </plugins>
   </build>
   <properties>
-    <api.version>1</api.version>
-    <maven.compiler.target>1.8</maven.compiler.target>
     <swagger-ui.version>3.17.0</swagger-ui.version>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <docker.image>${project.groupId}/${project.artifactId}</docker.image>
     <api.name>API</api.name>
+    <api.version>1</api.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <api.resourcepackage>api.resources</api.resourcepackage>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 </project>

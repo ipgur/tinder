@@ -46,6 +46,16 @@ public class Example implements ResourceEvents {
         .build();
   }
 
+  @GET
+  @Path("/dbtest")
+  @Produces("application/json")
+  @ApiOperation(value = "Returns a simple select 1",
+    notes = "Just a select",
+    response = String.class)
+  public String testdb() {
+    return serviceExample.getIt();
+  }
+
   @POST
   @Path("/echo/")
   @Consumes("text/plain")

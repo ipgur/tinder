@@ -186,7 +186,6 @@ public class ResourceProcessor extends AbstractProcessor {
     Converter converterAnn = method.getAnnotation(Converter.class);
     if (converterAnn != null) {
       // Because of some crap thing/impl, cannot get classes out of annotations and need a trick for it...
-      TypeMirror value = null;
       try {
         transformerClazz = converterAnn.value();
       } catch (MirroredTypeException mte) {
@@ -277,10 +276,18 @@ public class ResourceProcessor extends AbstractProcessor {
     result.add(blockStrings.build());
     result.add(blockVars.build());
     if (isReturnVoid) {
-      result.addStatement("$L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
+      if (paramNames == null) {
+        result.addStatement("$L.$L()", PARAM_SOURCECLASS, method.getSimpleName());
+      } else {
+        result.addStatement("$L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
+      }
       result.addStatement("return null");
     } else {
-      result.addStatement("return $L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
+      if (paramNames == null) {
+        result.addStatement("return $L.$L()", PARAM_SOURCECLASS, method.getSimpleName());
+      } else {
+        result.addStatement("return $L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
+      }
     }
 
     return result.unindent().build();

@@ -1,0 +1,5 @@
+jdbcUrl: jdbc:h2:mem:test
+username: sa
+password: ""
+properties:
+  maxWaitTime: 30

@@ -15,27 +15,84 @@
  */
 package tinder.core;
 
+import com.codahale.metrics.MetricRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import static java.util.Optional.empty;
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Loads up the Jdbi instance.
  *
  * @author Raffaele Ragni
  */
-public class JDBILoader {
+public final class JDBILoader {
+
+  private static final Logger LOG = LoggerFactory.getLogger(JDBILoader.class);
+
+  private JDBILoader() {
+  }
+
+  /**
+   * Creates a new Jdbi instance. Uses HikaryCP. Loads jdbi.yml default file. Use the load(String) for specifying
+   * another file.
+   *
+   * @return Jdbi instance
+   */
+  public static Jdbi load() {
+    return load("jdbi", empty(), empty(), empty());
+  }
 
   /**
    * Creates a new Jdbi instance. Uses HikaryCP.
    *
-   * @param name config name. This will lookup for <name>.y[a]ml in all known paths including the current folder
+   * @param name config name. This will lookup for name.y[a]ml in all known paths including the current folder
    * @return Jdbi instance
    */
   public static Jdbi load(String name) {
-    return load(name, empty(), empty());
+    return load(name, empty(), empty(), empty());
+  }
+
+  /**
+   * Creates a new Jdbi instance. Uses HikaryCP. Loads jdbi.yml default file. Use the load(String) for specifying
+   * another file.
+   *
+   * @param metricRegistry metric registry for the connection pool
+   * @return Jdbi instance
+   */
+  public static Jdbi load(Optional<MetricRegistry> metricRegistry) {
+    return load("jdbi", empty(), empty(), metricRegistry);
+  }
+
+  /**
+   * Creates a new Jdbi instance. Uses HikaryCP.
+   *
+   * @param name config name. This will lookup for name.y[a]ml in all known paths including the current folder
+   * @param metricRegistry metric registry for the connection pool
+   * @return Jdbi instance
+   */
+  public static Jdbi load(String name, Optional<MetricRegistry> metricRegistry) {
+    return load(name, empty(), empty(), metricRegistry);
   }
 
   /**
@@ -43,28 +100,89 @@ public class JDBILoader {
    * Because user and passwords are secrets and the application MAY want to load them dynamically and not statically
    * from a config file.
    *
-   * @param name config name. This will lookup for <name>.y[a]ml in all known paths including the current folder
+   * @param name config name. This will lookup for name.y[a]ml in all known paths including the current folder
    * @param username dynamic username, if empty then the config file will be read for the username
    * @param password dynamic password, if empty then the config file will be read for the password
+   * @param metricRegistry metric registry for the connection pool
    * @return Jdbi instance
    */
-  public static Jdbi load(String name, Optional<String> username, Optional<String> password) {
+  public static Jdbi load(String name, Optional<String> username, Optional<String> password, Optional<MetricRegistry> metricRegistry) {
 
     HikariConfig config = new HikariConfig();
 
+    // Function to load configurations and fill in to the hikari config, from a given path.
+    // It only supports yaml.
+    // Properties are hard coded: jdbcUrl, username, password
+    // More props to come later..
+    Consumer<Path> configLoader = path -> {
+      Map<String, Object> values;
+      Yaml yaml = new Yaml();
+      values = withinReaderFromPath(path, reader -> yaml.load(reader));
+      LOG.info("Loading values from {}", path);
+      config.setJdbcUrl(values.get("jdbcUrl").toString());
+      config.setUsername(username.orElse(values.get("username").toString()));
+      config.setPassword(password.orElse(values.get("password").toString()));
 
-    config.setJdbcUrl("jdbc:mysql://localhost:3306/db?zeroDateTimeBehavior=round");
-    config.setUsername("user");
-    config.setPassword("pass");
-    config.addDataSourceProperty("dataSourceClassName", "com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
-    config.addDataSourceProperty("autoCommit", "false");
-    config.addDataSourceProperty("useServerPrepStmts", "true");
-    config.addDataSourceProperty("cachePrepStmts", "true");
+      Map<String, Object> mapProps = (Map<String, Object>) values.get("properties");
+      if (mapProps != null) {
+        final Properties properties = new Properties();
+        mapProps.entrySet().forEach((property) -> {
+          properties.setProperty(property.getKey(), property.getValue().toString());
+        });
+        config.setDataSourceProperties(properties);
+      }
+    };
+
+    LOG.info("Scanning for files with base name {}", name);
+
+    // Look for configuration in the actual file system.
+    Optional<Path> foundPath = Arrays.asList(
+        Paths.get(name + ".yml"),
+        Paths.get(name + ".yaml"),
+        Paths.get(getJarPath(), name + ".yml"),
+        Paths.get(getJarPath(), name + ".yaml")
+    ).stream()
+        .filter(Objects::nonNull)
+        .filter(Files::exists)
+        .findFirst();
+
+    foundPath.ifPresent(configLoader);
+
+    // Look for configuration in the classpath / inside jar
+    // In this special case some more 'manual' coding is required because classpaths are a special case.
+    if (!foundPath.isPresent()) {
+      URL res = ClassLoader.getSystemClassLoader().getResource(name + ".yml");
+      res = res == null ? ClassLoader.getSystemClassLoader().getResource(name + ".yaml") : res;
+      if (res != null) {
+        configLoader.accept(Paths.get(toUri(res)));
+      }
+    }
 
     HikariDataSource ds = new HikariDataSource(config);
-
+    metricRegistry.ifPresent(m -> ds.setMetricRegistry(m));
     return Jdbi.create(ds);
   }
 
+  private static String getJarPath() {
+    return new File(toUri(JDBILoader.class.getProtectionDomain().getCodeSource().getLocation())).getPath();
+  }
+
+  /**
+   * This utility is to readapt checked exceptions
+   * @param url
+   * @return
+   */
+  static <T> T withinReaderFromPath(Path path, Function<Reader, T> fn) {
+    try (Reader r = new FileReader(path.toFile())) { return fn.apply(r); } catch (IOException ex) { throw new RuntimeException(ex); }
+  }
+
+  /**
+   * This utility is to readapt checked exceptions
+   * @param url
+   * @return
+   */
+  static URI toUri(URL url) {
+    try { return url.toURI(); } catch (URISyntaxException ex) { throw new RuntimeException(ex); }
+  }
 
 }
