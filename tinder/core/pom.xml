@@ -8,7 +8,7 @@
   </parent>
   <artifactId>tinder-core</artifactId>
   <packaging>jar</packaging>
-  <name>Tinder patterns</name>
+  <name>Tinder core</name>
   <description>Core library for API stack setup</description>
   <url>https://github.com/raffaeleragni/tinder</url>
 </project>
