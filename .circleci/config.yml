@@ -26,6 +26,9 @@ jobs:
       - run:
           name: Import GPG keys
           command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              exit 0
+            fi
             apt-get update && apt-get install -y gpg
             echo "Importing key..."
             echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import --no-tty --batch --yes
@@ -33,7 +36,11 @@ jobs:
             echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust --no-tty --batch --yes
       - run: 
           name: Publish library
-          command: cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
+          command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              exit 0
+            fi
+            cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
       - save_cache:
           key: dependencies
           paths: [~/.m2]
@@ -79,12 +86,19 @@ jobs:
           command: sudo apt-get install awscli
       - run:
           name: Sign into AWS ecr
-          command: $(aws ecr get-login --no-include-email --region ${AWS_DEFAULT_REGION})
+          command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              exit 0
+            fi
+            $(aws ecr get-login --no-include-email --region ${AWS_DEFAULT_REGION})
       - run:
           name: Push image
           command: |
             export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/tinder/tinderarchetype:master"
             docker build -t "${FULL_IMAGE_NAME}" tinderarchetype
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              exit 0
+            fi
             docker push ${FULL_IMAGE_NAME}
 
 workflows:
