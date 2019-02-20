@@ -1,4 +1,17 @@
-version: 2
+version: 2.1
+commands:
+  early_return_for_forked_pull_requests:
+    description: >-
+      If this build is from a fork, stop executing the current job and return success.
+      This is useful to avoid steps that will fail due to missing credentials.
+    steps:
+      - run:
+          name: Early return if this build is from a forked PR
+          command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
 jobs:
   buildlib:
     docker:
@@ -23,12 +36,10 @@ jobs:
       - run: 
           name: Codecov
           command: bash <(curl -s https://codecov.io/bash)
+      - early_return_for_forked_pull_requests
       - run:
           name: Import GPG keys
           command: |
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
-              exit 0
-            fi
             apt-get update && apt-get install -y gpg
             echo "Importing key..."
             echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import --no-tty --batch --yes
@@ -36,11 +47,7 @@ jobs:
             echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust --no-tty --batch --yes
       - run: 
           name: Publish library
-          command: |
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
-              exit 0
-            fi
-            cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
+          command: cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
       - save_cache:
           key: dependencies
           paths: [~/.m2]
@@ -78,6 +85,7 @@ jobs:
     machine:
       docker_layer_caching: true
     steps:
+      - early_return_for_forked_pull_requests
       - checkout
       - attach_workspace:
           at: .
@@ -86,19 +94,12 @@ jobs:
           command: sudo apt-get install awscli
       - run:
           name: Sign into AWS ecr
-          command: |
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
-              exit 0
-            fi
-            $(aws ecr get-login --no-include-email --region ${AWS_DEFAULT_REGION})
+          command: $(aws ecr get-login --no-include-email --region ${AWS_DEFAULT_REGION})
       - run:
           name: Push image
           command: |
             export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/tinder/tinderarchetype:master"
             docker build -t "${FULL_IMAGE_NAME}" tinderarchetype
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
-              exit 0
-            fi
             docker push ${FULL_IMAGE_NAME}
 
 workflows:
