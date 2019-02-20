@@ -15,15 +15,14 @@ jobs:
           command: |
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
-            mkdir -p ~/coverage/
-            find . -type f -regex ".*/target/jacoco.exec" -exec cp {} ~/coverage/ \;
           when: always
       - store_test_results:
           path: ~/junit
       - store_artifacts:
           path: ~/junit
-      - store_artifacts:
-          path: ~/coverage
+      - run: 
+          name: Codecov
+          command: bash <(curl -s https://codecov.io/bash)
       - run:
           name: Import GPG keys
           command: |
@@ -53,15 +52,14 @@ jobs:
           command: |
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
-            mkdir -p ~/coverage/
-            find . -type f -regex ".*/target/jacoco.exec" -exec cp {} ~/coverage/ \;
           when: always
       - store_test_results:
           path: ~/junit
       - store_artifacts:
           path: ~/junit
-      - store_artifacts:
-          path: ~/coverage
+      - run: 
+          name: Codecov
+          command: bash <(curl -s https://codecov.io/bash)
       - save_cache:
           key: dependencies
           paths: [~/.m2]
