@@ -29,7 +29,7 @@ package tinder.core.auth;
  * 
  * /register
  * addRegisterResource(path with default to /register,
- *      code -> {... what to do with confirmation code})
+ *      code {... what to do with confirmation code})
  * - this one accepts email+password and created the entry in the db,
  *   and returns a confirmation code to activate the user later.
  * - the developer will deal with sending codes via email/sms whatever (lambda)
