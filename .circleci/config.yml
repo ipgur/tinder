@@ -8,7 +8,7 @@ commands:
       - run:
           name: Early return if this build is from a forked PR
           command: |
-            if [ "$CIRCLE_BRANCH" != "master "]; then
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
               echo "Not deploying anything that is not master"
               circleci step halt
             fi
