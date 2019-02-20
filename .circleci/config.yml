@@ -69,7 +69,7 @@ jobs:
           command: |
             export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/tinder/tinderarchetype:master"
             docker build -t "${FULL_IMAGE_NAME}" tinderarchetype
-            #docker push ${FULL_IMAGE_NAME}
+            docker push ${FULL_IMAGE_NAME}
 
 workflows:
   version: 2
@@ -79,6 +79,6 @@ workflows:
           context: mvn_central
       - buildarchetype:
           requires: [buildlib]
-      - pusharchetype:
-          context: aws
-          requires: [buildarchetype]
+#      - pusharchetype:
+#          context: aws
+#          requires: [buildarchetype]
