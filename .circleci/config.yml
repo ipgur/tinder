@@ -15,7 +15,15 @@ jobs:
           command: |
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+            mkdir -p ~/coverage/
+            find . -type f -regex ".*/target/jacoco.exec" -exec cp {} ~/coverage/ \;
           when: always
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/coverage
       - run:
           name: Import GPG keys
           command: |
@@ -27,10 +35,6 @@ jobs:
       - run: 
           name: Publish library
           command: cd tinder && ./mvnw deploy -P release --settings ossrh_settings.xml
-      - store_test_results:
-          path: ~/junit
-      - store_artifacts:
-          path: ~/junit
       - save_cache:
           key: dependencies
           paths: [~/.m2]
@@ -44,6 +48,20 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: cd tinderarchetype && ./mvnw package
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+            mkdir -p ~/coverage/
+            find . -type f -regex ".*/target/jacoco.exec" -exec cp {} ~/coverage/ \;
+          when: always
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/coverage
       - save_cache:
           key: dependencies
           paths: [~/.m2]
