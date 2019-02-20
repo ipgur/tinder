@@ -83,7 +83,10 @@ import tinder.core.JsonTransformer;
  *
  * @author Raffaele Ragni
  */
-public class AuthenticationResources {
+public final class AuthenticationResources {
+
+  private AuthenticationResources() {
+  }
 
   //
   // Setup helpers
