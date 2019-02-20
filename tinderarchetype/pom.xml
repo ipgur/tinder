@@ -35,6 +35,28 @@
       <artifactId>h2</artifactId>
       <version>1.4.197</version>
     </dependency>
+    <!-- APT -->
+    <!-- Normally one would use the maven compiler plugin with annotationProcessingPaths but that does not work
+    for IDEs to find sources aftwrwards. Instead we add the dependency in the dependency list directly but
+    as 'optional' so won't be included transitively. -->
+    <dependency>
+      <groupId>com.google.dagger</groupId>
+      <artifactId>dagger-compiler</artifactId>
+      <version>2.21</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <version>2.7.5</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.github.raffaeleragni</groupId>
+      <artifactId>tinder-processors</artifactId>
+      <version>1.0</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>
@@ -44,25 +66,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.0</version>
-        <configuration>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.google.dagger</groupId>
-              <artifactId>dagger-compiler</artifactId>
-              <version>2.21</version>
-            </path>
-            <path>
-              <groupId>org.immutables</groupId>
-              <artifactId>value</artifactId>
-              <version>2.7.5</version>
-            </path>
-            <path>
-              <groupId>com.github.raffaeleragni</groupId>
-              <artifactId>tinder-processors</artifactId>
-              <version>1.0-SNAPSHOT</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
       </plugin>
       <!-- Build the swagger yaml statically -->
       <plugin>

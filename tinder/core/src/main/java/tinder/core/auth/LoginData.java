@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tinder.core;
+package tinder.core.auth;
 
-import com.google.gson.Gson;
-import spark.ResponseTransformer;
+import org.immutables.value.Value.Immutable;
 
 /**
- * Default json transformer (gson)
- *
+ * Login data, also used for registration.
  * @author Raffaele Ragni
  */
-public class JsonTransformer implements ResponseTransformer {
+@Immutable
+public interface LoginData {
 
-  private final Gson gson = new Gson();
+  /**
+   * Email is also the username / user identifier.
+   * @return the email
+   */
+  String email();
 
-  public <T> T parse(String json, Class<T> clazz) {
-    return gson.fromJson(json, clazz);
-  }
-
-  @Override
-  public String render(Object model) {
-    return gson.toJson(model);
-  }
+  /**
+   * Password is the secret.
+   * @return return the secret password
+   */
+  String password();
 }

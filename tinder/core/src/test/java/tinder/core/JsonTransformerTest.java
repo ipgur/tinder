@@ -18,6 +18,7 @@ package tinder.core;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +48,9 @@ public class JsonTransformerTest {
     bean.decimal = new BigDecimal("0.1");
     string = transformer.render(bean);
     Assertions.assertEquals("{\"id\":999,\"list\":[\"1\",\"äü\"],\"decimal\":0.1}", string);
+
+    RandomBean bean2 = transformer.parse(string, RandomBean.class);
+    Assertions.assertEquals(bean, bean2);
   }
 
 }
@@ -55,4 +59,37 @@ class RandomBean {
   public long id;
   public List<String> list;
   public BigDecimal decimal;
+
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 59 * hash + (int) (this.id ^ (this.id >>> 32));
+    hash = 59 * hash + Objects.hashCode(this.list);
+    hash = 59 * hash + Objects.hashCode(this.decimal);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final RandomBean other = (RandomBean) obj;
+    if (this.id != other.id) {
+      return false;
+    }
+    if (!Objects.equals(this.list, other.list)) {
+      return false;
+    }
+    if (!Objects.equals(this.decimal, other.decimal)) {
+      return false;
+    }
+    return true;
+  }
 }

@@ -50,9 +50,4 @@ public class JdbiLoaderTest {
     JDBILoader.load("config1", of(reg));
   }
 
-  @Test
-  public void testHelpers() {
-
-  }
-
 }

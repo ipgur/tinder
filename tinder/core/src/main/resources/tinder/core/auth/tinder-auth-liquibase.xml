@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+  <changeSet id="1" author="tinder-auth-tables">
+    <createTable tableName="tinder_users">
+      <column name="email" type="varchar(255)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="hash" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="verification" type="varchar(255)" defaultValue="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="enabled" type="boolean" defaultValue="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creation" type="datetime" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="tinder_users"
+                 indexName="tinder_users_enabled">
+      <column name="enabled"/>
+    </createIndex>
+    <createIndex tableName="tinder_users"
+                 indexName="tinder_users_creation">
+      <column name="creation"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="2" author="tinder-auth-tables">
+    <createTable tableName="tinder_tokens">
+      <column name="token" type="varchar(255)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="email" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creation" type="datetime" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="expiration" type="datetime">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="tinder_tokens"
+                   indexName="tinder_tokens_expiration">
+      <column name="expiration"/>
+    </createIndex>
+    <createIndex tableName="tinder_tokens"
+                   indexName="tinder_tokens_email">
+      <column name="email"/>
+    </createIndex>
+    <createIndex tableName="tinder_tokens"
+                   indexName="tinder_tokens_creation">
+      <column name="creation"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

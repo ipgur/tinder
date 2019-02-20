@@ -40,8 +40,8 @@ package tinder.core.auth;
  * These filters automatically have a default ignore path list:
  * - /login
  * - /register
- * - /check
- * These are not checked against authentication for obvous reasons, everything
+ * - /checktoken
+ * These are not checked against authentication for obvious reasons, everything
  * else will be locked by authentication.
  * That's the default. It can be changed by user.
  * (optional list in filter methods?)
