@@ -17,10 +17,13 @@ package tinder.core.auth;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.sql.Connection;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Optional;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.function.Consumer;
 import liquibase.Contexts;
@@ -87,6 +90,9 @@ public final class AuthenticationResources {
 
   private AuthenticationResources() {
   }
+
+  // 30 minutes
+  private static final long DEFAULT_TOKEN_EXPIRE_MS = 1800_000L;
 
   //
   // Setup helpers
@@ -211,6 +217,81 @@ public final class AuthenticationResources {
     // Delete the password
     Arrays.fill(password, ' ');
     return hashed;
+  }
+
+  //
+  // Login resource
+  //
+
+  public static void addLoginResource(Jdbi jdbi) {
+    addLoginResource(jdbi, empty());
+  }
+
+  public static void addLoginResource(Jdbi jdbi, String resourcePath) {
+    addLoginResource(jdbi, of(resourcePath));
+  }
+
+  public static void addLoginResource(Jdbi jdbi, Optional<String> resourcePath) {
+    Spark.post(resourcePath.orElse("/login"), (req, resp) -> login(jdbi, req, resp));
+  }
+
+  static Response login(Jdbi jdbi, Request req, Response resp) {
+    JsonTransformer tr = new JsonTransformer();
+    ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
+
+    Optional<String> optHash = jdbi.withHandle(h -> {
+      // Finds the hash code of the user but only if enabled. Returned as optional
+      return h.createQuery("select hash from tinder_users where email = :email and enabled = 1")
+          .bind("email", loginData.email())
+          .mapTo(String.class)
+          .findFirst();
+    });
+
+    boolean loggedIn = optHash
+        .map(hash -> BCrypt
+            .verifyer()
+            .verify(loginData.password().toCharArray(), hash.toCharArray())
+            .verified)
+        .orElse(false);
+
+    // Unauthorized, login didn't succeed.
+    if (!loggedIn) {
+      resp.status(401);
+      return resp;
+    }
+
+    // Create a new token with expiration default.
+    String token = UUID.randomUUID().toString();
+    Timestamp expiresAt = jdbi.withHandle(h -> {
+      h.execute("insert into tinder_tokens(token, email, expiration) "
+          // It's important to rely on the database timestamps because later for checking expiration we will rely
+          // on the same CURRENT_TIMESTAMP function on selection to filter valid tokens.
+          // The important thing is to rely always on the same thing, and the only central part that exists between
+          // different api nodes on fifferent hosts, is the database itself.
+          + "values(?, ?, DATEADD(MILLISECOND, "+DEFAULT_TOKEN_EXPIRE_MS+", CURRENT_TIMESTAMP))",
+          token, loginData.email());
+      return h.createQuery("select expiration from tinder_tokens where token = :token")
+          .bind("token", token)
+          .mapTo(Timestamp.class)
+          .findOnly();
+    });
+
+    // We output the estimate of expiration alwasy in UTC
+    // It's not important to be picky here, it's just a string to help the user visually see more or less when the
+    // token will expire.
+    SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+    jdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    String expiresAtString = jdf.format(expiresAt);
+
+    ImmutableTokenResult tokenResult = ImmutableTokenResult.builder()
+        .token(token)
+        // constant as long as we use the DEFAULT_TOKEN_EXPIRE_MS which is 30 minutes
+        .expiresIn("30m")
+        .expiresAt(expiresAtString)
+        .build();
+
+    resp.body(tr.render(tokenResult));
+    return resp;
   }
 
 }
