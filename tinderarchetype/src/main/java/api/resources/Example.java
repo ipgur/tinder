@@ -29,6 +29,11 @@ public class Example implements ResourceEvents {
     ResourceExample.bind(this);
   }
 
+  @POST
+  @Path("/auth/test")
+  public void testAuth() {
+  }
+
   @GET
   @Path("/test/{id}")
   @Produces("application/json")

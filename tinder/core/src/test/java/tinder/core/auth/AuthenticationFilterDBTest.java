@@ -15,80 +15,82 @@
  */
 package tinder.core.auth;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import static java.util.Optional.empty;
 import java.util.UUID;
 import liquibase.exception.LiquibaseException;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import spark.HaltException;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
 import tinder.core.JDBILoader;
+import static tinder.core.auth.AuthenticationResourceCheckTokenTest.addToken;
 
 /**
  *
  * @author Raffaele Ragni
  */
-public class AuthenticationResourceCheckTokenTest {
+public class AuthenticationFilterDBTest {
 
   @Test
-  public void testCheckToken() throws LiquibaseException {
+  public void testDB() throws LiquibaseException {
     Jdbi jdbi = JDBILoader.load();
     AuthenticationResources.upgradeByLiquibase(jdbi);
 
     Request req = mock(Request.class);
     Response resp = mock(Response.class);
 
+    HaltException ex;
+    when(req.uri()).thenReturn("/someendpoint");
+
     // Test a valid token (a 1h token)
     String validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + validToken);
-    String email = AuthenticationResources.checkToken(jdbi, req, resp);
-    Assertions.assertEquals("\"email\"", email);
-    verify(resp).status(200);
+    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
 
     // Test an invalid token, save oen and pick another completely random one
     validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + UUID.randomUUID().toString());
-    AuthenticationResources.checkToken(jdbi, req, resp);
-    verify(resp, times(1)).status(401);
+    ex = Assertions.assertThrows(HaltException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    });
 
     // Test an invalid header
     when(req.headers("Authorization")).thenReturn("aaaa not a token");
-    AuthenticationResources.checkToken(jdbi, req, resp);
-    verify(resp, times(2)).status(401);
+    ex = Assertions.assertThrows(HaltException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    });
 
     // Test an expired token (1h ago)
     String expiredToken = UUID.randomUUID().toString();
     addToken(jdbi, expiredToken, -3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + expiredToken);
-    AuthenticationResources.checkToken(jdbi, req, resp);
-    verify(resp, times(3)).status(401);
+    ex = Assertions.assertThrows(HaltException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    });
+
+    // Tes skippping of login endpoint
+    when(req.uri()).thenReturn("/login");
+    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
 
     // Test with the spark endpoints now
 
     // Use random available port
     Spark.port(0);
 
-    AuthenticationResources.addCheckTokenResource(jdbi);
-    AuthenticationResources.addCheckTokenResource(jdbi, "/myChecktoken");
+    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*");
+    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*", new HashSet(Arrays.asList("/myendpoint")));
 
     // Make sure to not leave spark open here...
     Spark.stop();
-  }
-
-  public static void addToken(Jdbi jdbi, String token, long deltaTime) {
-    jdbi.withHandle(h -> {
-      h.execute("insert into tinder_tokens(token, email, expiration) "
-          + "values(?, ?, DATEADD(MILLISECOND, "+deltaTime+", CURRENT_TIMESTAMP))",
-          token, "email");
-      return null;
-    });
   }
 
 }

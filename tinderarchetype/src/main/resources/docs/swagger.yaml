@@ -4,6 +4,13 @@ info:
   version: "1"
   title: "API"
 paths:
+  /auth/test:
+    post:
+      operationId: "testAuth"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
   /dbtest:
     get:
       summary: "Returns a simple select 1"

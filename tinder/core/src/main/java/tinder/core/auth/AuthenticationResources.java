@@ -17,14 +17,11 @@ package tinder.core.auth;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.sql.Connection;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.function.Consumer;
 import liquibase.Contexts;
