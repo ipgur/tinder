@@ -65,6 +65,9 @@ public class AuthenticationResourceLoginTest {
 
     // Test with the spark endpoints now
 
+    // Use random available port
+    Spark.port(0);
+
     AuthenticationResources.addLoginResource(jdbi);
     AuthenticationResources.addLoginResource(jdbi, "/myLogin");
 

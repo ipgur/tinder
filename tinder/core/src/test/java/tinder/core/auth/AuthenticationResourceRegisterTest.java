@@ -67,6 +67,9 @@ public class AuthenticationResourceRegisterTest {
 
     // Test with the spark endpoints now
 
+    // Use random available port
+    Spark.port(0);
+
     AuthenticationResources.addRegisterResource(jdbi);
     AuthenticationResources.addRegisterResource(jdbi, System.out::println);
     AuthenticationResources.addRegisterResource(jdbi, "/myRegistration");
