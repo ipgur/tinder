@@ -5,7 +5,7 @@
 
   <groupId>archetype</groupId>
   <artifactId>tinder-archetype</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
 
   <properties>
 
@@ -28,7 +28,7 @@
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-core</artifactId>
-      <version>1.0</version>
+      <version>1.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -56,6 +56,11 @@
       <artifactId>tinder-processors</artifactId>
       <version>1.0</version>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.5</version>
     </dependency>
   </dependencies>
 

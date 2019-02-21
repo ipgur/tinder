@@ -15,5 +15,5 @@ public class JdbiModule {
   @Provides Jdbi jdbi() {
     return JDBILoader.load();
   }
-  
+
 }

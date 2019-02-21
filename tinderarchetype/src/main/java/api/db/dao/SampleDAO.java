@@ -17,7 +17,7 @@ public class SampleDAO {
 
   public String test() {
     return jdbi.withHandle(handle -> {
-      return handle.createQuery("select 1 from dual")
+      return handle.createQuery("select 1")
         .mapTo(String.class)
         .findOnly();
     });

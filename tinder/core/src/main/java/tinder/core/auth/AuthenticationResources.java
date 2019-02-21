@@ -19,6 +19,7 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.sql.Connection;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import static java.util.Optional.empty;
@@ -183,13 +184,13 @@ public final class AuthenticationResources {
    */
   public static void confirm(Jdbi jdbi, String email, String code) {
     jdbi.withHandle(h -> {
-      h.execute("update tinder_users set enabled = 1 where email = ? and verification = ?", email, code);
+      h.execute("update tinder_users set enabled = true where email = ? and verification = ?", email, code);
       return null;
     });
   }
 
   // Handle this as default package level so we can mock/use it later in unit tests
-  static Response register(Jdbi jdbi, Optional<Consumer<String>> verificationCodeConsumer, Request req, Response resp) {
+  static String register(Jdbi jdbi, Optional<Consumer<String>> verificationCodeConsumer, Request req, Response resp) {
     JsonTransformer tr = new JsonTransformer();
     ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
 
@@ -208,7 +209,7 @@ public final class AuthenticationResources {
     Consumer<String> callback = verificationCodeConsumer.orElse(c -> confirm(jdbi, loginData.email(), c));
     callback.accept(code);
 
-    return resp;
+    return "";
   }
 
   // Handle this as default package level so we can mock/use it later in unit tests
@@ -236,13 +237,13 @@ public final class AuthenticationResources {
     Spark.post(resourcePath.orElse("/login"), (req, resp) -> login(jdbi, req, resp));
   }
 
-  static Response login(Jdbi jdbi, Request req, Response resp) {
+  static String login(Jdbi jdbi, Request req, Response resp) {
     JsonTransformer tr = new JsonTransformer();
     ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
 
     Optional<String> optHash = jdbi.withHandle(h -> {
       // Finds the hash code of the user but only if enabled. Returned as optional
-      return h.createQuery("select hash from tinder_users where email = :email and enabled = 1")
+      return h.createQuery("select hash from tinder_users where email = :email and enabled = true")
           .bind("email", loginData.email())
           .mapTo(String.class)
           .findFirst();
@@ -258,41 +259,30 @@ public final class AuthenticationResources {
     // Unauthorized, login didn't succeed.
     if (!loggedIn) {
       resp.status(401);
-      return resp;
+      return "";
     }
 
     // Create a new token with expiration default.
     String token = UUID.randomUUID().toString();
-    Timestamp expiresAt = jdbi.withHandle(h -> {
+    Instant expiresAt = jdbi.withHandle(h -> {
       h.execute("insert into tinder_tokens(token, email, expiration) "
-          // It's important to rely on the database timestamps because later for checking expiration we will rely
-          // on the same CURRENT_TIMESTAMP function on selection to filter valid tokens.
-          // The important thing is to rely always on the same thing, and the only central part that exists between
-          // different api nodes on fifferent hosts, is the database itself.
-          + "values(?, ?, DATEADD(MILLISECOND, "+DEFAULT_TOKEN_EXPIRE_MS+", CURRENT_TIMESTAMP))",
-          token, loginData.email());
+          // It's important to rely on the UTC always, and Instant does that.
+          + "values(?, ?, ?)",
+          token, loginData.email(), Instant.now().plusMillis(DEFAULT_TOKEN_EXPIRE_MS));
       return h.createQuery("select expiration from tinder_tokens where token = :token")
           .bind("token", token)
-          .mapTo(Timestamp.class)
+          .mapTo(Instant.class)
           .findOnly();
     });
-
-    // We output the estimate of expiration alwasy in UTC
-    // It's not important to be picky here, it's just a string to help the user visually see more or less when the
-    // token will expire.
-    SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-    jdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-    String expiresAtString = jdf.format(expiresAt);
 
     ImmutableTokenResult tokenResult = ImmutableTokenResult.builder()
         .token(token)
         // constant as long as we use the DEFAULT_TOKEN_EXPIRE_MS which is 30 minutes
         .expiresIn("30m")
-        .expiresAt(expiresAtString)
+        .expiresAt(expiresAt.toString())
         .build();
 
-    resp.body(tr.render(tokenResult));
-    return resp;
+    return tr.render(tokenResult);
   }
 
   //
@@ -311,7 +301,7 @@ public final class AuthenticationResources {
     Spark.post(resourcePath.orElse("/checktoken"), (req, resp) -> checkToken(jdbi, req, resp));
   }
 
-  static Response checkToken(Jdbi jdbi, Request req, Response resp) {
+  static String checkToken(Jdbi jdbi, Request req, Response resp) {
     JsonTransformer tr = new JsonTransformer();
     String authHeader = req.headers("Authorization");
     authHeader = authHeader == null ? "" : authHeader.trim();
@@ -320,8 +310,7 @@ public final class AuthenticationResources {
     // devs can implement their own if they want
     if (!authHeader.toLowerCase().startsWith("Bearer".toLowerCase())) {
       resp.status(401);
-      resp.body(tr.render(ImmutableApiMessage.builder().message("Only bearer tokens are supported").build()));
-      return resp;
+      return tr.render(ImmutableApiMessage.builder().message("Only bearer tokens are supported").build());
     }
 
     String token = authHeader.substring("Bearer".length()).trim();
@@ -329,21 +318,20 @@ public final class AuthenticationResources {
     // It is important to return the email because the calling api must know who is the owner of that token to profile
     // permissioning in their own api
     Optional<String> email = jdbi.withHandle(h -> {
-      return h.createQuery("select email from tinder_tokens where token = :token and expiration > CURRENT_TIMESTAMP")
+      return h.createQuery("select email from tinder_tokens where token = :token and expiration > :stamp")
         .bind("token", token)
+        .bind("stamp", Instant.now())
         .mapTo(String.class)
         .findFirst();
     });
 
-    email.ifPresent(e -> {
+    if (email.isPresent()) {
       resp.status(200);
-      resp.body(e);
-    });
-    if (!email.isPresent()) {
+      return tr.render(email.get());
+    } else {
       resp.status(401);
+      return "";
     }
-
-    return resp;
   }
 
 }

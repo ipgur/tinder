@@ -18,6 +18,7 @@ package tinder.core.auth;
 import java.util.UUID;
 import liquibase.exception.LiquibaseException;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -46,7 +47,8 @@ public class AuthenticationResourceCheckTokenTest {
     String validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + validToken);
-    AuthenticationResources.checkToken(jdbi, req, resp);
+    String email = AuthenticationResources.checkToken(jdbi, req, resp);
+    Assertions.assertEquals("\"email\"", email);
     verify(resp).status(200);
 
     // Test an invalid token, save oen and pick another completely random one
