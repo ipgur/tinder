@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import spark.Request;
 import spark.Response;
-import spark.Spark;
 import tinder.core.JDBILoader;
 
 /**
@@ -62,17 +61,6 @@ public class AuthenticationResourceLoginTest {
     when(req.body()).thenReturn("{\"email\": \"testlogin@test.bb\", \"password\": \"aaa\"}");
     AuthenticationResources.login(jdbi, req, resp);
     verify(resp).status(401);
-
-    // Test with the spark endpoints now
-
-    // Use random available port
-    Spark.port(0);
-
-    AuthenticationResources.addLoginResource(jdbi);
-    AuthenticationResources.addLoginResource(jdbi, "/myLogin");
-
-    // Make sure to not leave spark open here...
-    Spark.stop();
   }
 
 }

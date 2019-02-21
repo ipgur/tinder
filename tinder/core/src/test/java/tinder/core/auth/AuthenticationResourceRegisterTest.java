@@ -26,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import spark.Request;
 import spark.Response;
-import spark.Spark;
 import tinder.core.JDBILoader;
 
 /**
@@ -64,19 +63,6 @@ public class AuthenticationResourceRegisterTest {
       Assertions.assertFalse(enabled2);
       return null;
     });
-
-    // Test with the spark endpoints now
-
-    // Use random available port
-    Spark.port(0);
-
-    AuthenticationResources.addRegisterResource(jdbi);
-    AuthenticationResources.addRegisterResource(jdbi, System.out::println);
-    AuthenticationResources.addRegisterResource(jdbi, "/myRegistration");
-    AuthenticationResources.addRegisterResource(jdbi, "/myRegistration2", System.out::println);
-
-    // Make sure to not leave spark open here...
-    Spark.stop();
   }
 
 }

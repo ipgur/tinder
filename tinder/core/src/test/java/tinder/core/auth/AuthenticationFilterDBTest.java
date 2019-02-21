@@ -15,8 +15,6 @@
  */
 package tinder.core.auth;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import static java.util.Optional.empty;
 import java.util.UUID;
 import liquibase.exception.LiquibaseException;
@@ -28,7 +26,6 @@ import static org.mockito.Mockito.when;
 import spark.HaltException;
 import spark.Request;
 import spark.Response;
-import spark.Spark;
 import tinder.core.JDBILoader;
 import static tinder.core.auth.AuthenticationResourceCheckTokenTest.addToken;
 
@@ -80,17 +77,6 @@ public class AuthenticationFilterDBTest {
     // Tes skippping of login endpoint
     when(req.uri()).thenReturn("/login");
     AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
-
-    // Test with the spark endpoints now
-
-    // Use random available port
-    Spark.port(0);
-
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*");
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*", new HashSet(Arrays.asList("/myendpoint")));
-
-    // Make sure to not leave spark open here...
-    Spark.stop();
   }
 
 }

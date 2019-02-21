@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import spark.Request;
 import spark.Response;
-import spark.Spark;
 import tinder.core.JDBILoader;
 
 /**
@@ -69,17 +68,6 @@ public class AuthenticationResourceCheckTokenTest {
     when(req.headers("Authorization")).thenReturn("Bearer " + expiredToken);
     AuthenticationResources.checkToken(jdbi, req, resp);
     verify(resp, times(3)).status(401);
-
-    // Test with the spark endpoints now
-
-    // Use random available port
-    Spark.port(0);
-
-    AuthenticationResources.addCheckTokenResource(jdbi);
-    AuthenticationResources.addCheckTokenResource(jdbi, "/myChecktoken");
-
-    // Make sure to not leave spark open here...
-    Spark.stop();
   }
 
   public static void addToken(Jdbi jdbi, String token, long deltaTime) {
