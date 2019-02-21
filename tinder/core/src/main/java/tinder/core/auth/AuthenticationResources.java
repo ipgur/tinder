@@ -39,6 +39,7 @@ import org.jdbi.v3.core.Jdbi;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
+import tinder.core.ImmutableApiMessage;
 import tinder.core.JsonTransformer;
 
 /**
@@ -291,6 +292,57 @@ public final class AuthenticationResources {
         .build();
 
     resp.body(tr.render(tokenResult));
+    return resp;
+  }
+
+  //
+  // Check resource
+  //
+
+  public static void addCheckTokenResource(Jdbi jdbi) {
+    addCheckTokenResource(jdbi, empty());
+  }
+
+  public static void addCheckTokenResource(Jdbi jdbi, String resourcePath) {
+    addCheckTokenResource(jdbi, of(resourcePath));
+  }
+
+  public static void addCheckTokenResource(Jdbi jdbi, Optional<String> resourcePath) {
+    Spark.post(resourcePath.orElse("/checktoken"), (req, resp) -> checkToken(jdbi, req, resp));
+  }
+
+  static Response checkToken(Jdbi jdbi, Request req, Response resp) {
+    JsonTransformer tr = new JsonTransformer();
+    String authHeader = req.headers("Authorization");
+    authHeader = authHeader == null ? "" : authHeader.trim();
+
+    // Can't accept other token types, at least not in this implementaion
+    // devs can implement their own if they want
+    if (!authHeader.toLowerCase().startsWith("Bearer".toLowerCase())) {
+      resp.status(401);
+      resp.body(tr.render(ImmutableApiMessage.builder().message("Only bearer tokens are supported").build()));
+      return resp;
+    }
+
+    String token = authHeader.substring("Bearer".length()).trim();
+    // Just a simple find-email and return 200 or 401 and the email itself as string (maybe json later?)
+    // It is important to return the email because the calling api must know who is the owner of that token to profile
+    // permissioning in their own api
+    Optional<String> email = jdbi.withHandle(h -> {
+      return h.createQuery("select email from tinder_tokens where token = :token and expiration > CURRENT_TIMESTAMP")
+        .bind("token", token)
+        .mapTo(String.class)
+        .findFirst();
+    });
+
+    email.ifPresent(e -> {
+      resp.status(200);
+      resp.body(e);
+    });
+    if (!email.isPresent()) {
+      resp.status(401);
+    }
+
     return resp;
   }
 
