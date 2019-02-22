@@ -6,7 +6,7 @@
 
   <groupId>com.github.raffaeleragni</groupId>
   <artifactId>tinder</artifactId>
-  <version>1.1</version>
+  <version>1.2-SNAPSHOT</version>
 
   <name>Tinder</name>
   <description>API stack based on source code generation</description>
