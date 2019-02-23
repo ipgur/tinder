@@ -35,8 +35,11 @@ public class RoutesTest {
     // Use random available port
     Spark.port(0);
 
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*");
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/*", new HashSet(Arrays.asList("/myendpoint")));
+    AuthenticationFilter.addAPIBasedFilter("/auth1/*", "http://localhost:4567");
+    AuthenticationFilter.addAPIBasedFilter("/auth1-a/*", "http://localhost:4567", new HashSet(Arrays.asList("/myendpoint")));
+
+    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth2/*");
+    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth3/*", new HashSet(Arrays.asList("/myendpoint")));
 
     AuthenticationResources.addRegisterResource(jdbi);
     AuthenticationResources.addRegisterResource(jdbi, System.out::println);
@@ -45,7 +48,7 @@ public class RoutesTest {
 
     AuthenticationResources.addLoginResource(jdbi);
     AuthenticationResources.addLoginResource(jdbi, "/myLogin");
-    
+
     AuthenticationResources.addCheckTokenResource(jdbi);
     AuthenticationResources.addCheckTokenResource(jdbi, "/myChecktoken");
 

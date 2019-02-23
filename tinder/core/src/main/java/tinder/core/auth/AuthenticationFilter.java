@@ -23,7 +23,7 @@ import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import java.util.Set;
 import org.jdbi.v3.core.Jdbi;
-import spark.HaltException;
+import retrofit2.Retrofit;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
@@ -63,6 +63,9 @@ import tinder.core.JsonTransformer;
  * @author Raffaele Ragni
  */
 public final class AuthenticationFilter {
+
+  public static final String REQ_EMAIL = "email";
+  public static final String REQ_USER = REQ_EMAIL;
 
   private AuthenticationFilter() {
   }
@@ -147,6 +150,51 @@ public final class AuthenticationFilter {
     });
 
     if (!email.isPresent()) {
+      Spark.halt(401, "Unauthorized");
+    }
+  }
+
+  public static void addAPIBasedFilter(String filterPath, String apiBaseURL) {
+    addAPIBasedFilter(filterPath, apiBaseURL, empty());
+  }
+
+  public static void addAPIBasedFilter(String filterPath, String apiBaseURL, Set<String> excludeEndpoints) {
+    addAPIBasedFilter(filterPath, apiBaseURL, of(excludeEndpoints));
+  }
+
+  public static void addAPIBasedFilter(String filterPath, String apiBaseURL, Optional<Set<String>> excludeEndpoints) {
+    Retrofit retrofit = new Retrofit.Builder()
+        .baseUrl(apiBaseURL)
+        .build();
+    AuthenticationService service = retrofit.create(AuthenticationService.class);
+    Spark.before(filterPath, (req, resp) -> authenticateAPIFilter(service, excludeEndpoints, req, resp));
+  }
+
+  static void authenticateAPIFilter(AuthenticationService service, Optional<Set<String>> excludeEndpoints, Request req, Response resp) {
+    // Thera are some well known endpoints that we must exclude from this filter.
+    // They are user customizable too, but we have defaults to the defaults of the AuthenticationResources.
+    Set<String> exclusions = excludeEndpoints.orElse(new HashSet(Arrays.asList(
+        "/register",
+        "/login",
+        "/checktoken",
+        "/"
+    )));
+
+    boolean toSkip = exclusions.stream()
+        .filter(s -> req.uri().equals(s))
+        .findFirst()
+        .isPresent();
+    if (toSkip) {
+      // Don't check authentication for the exclusion list.
+      return;
+    }
+
+    // Basically just forward the call using the same authorization header.
+    String email = service.checkUrl(req.headers("Authorization"));
+    // Add it to the req attribute if not null
+    if (email != null) {
+      req.attribute(REQ_EMAIL, email);
+    } else {
       Spark.halt(401, "Unauthorized");
     }
   }
