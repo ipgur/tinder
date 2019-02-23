@@ -28,7 +28,7 @@
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-core</artifactId>
-      <version>1.1</version>
+      <version>1.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -54,7 +54,7 @@
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-processors</artifactId>
-      <version>1.1</version>
+      <version>1.2-SNAPSHOT</version>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -232,7 +232,16 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <minimizeJar>true</minimizeJar>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>

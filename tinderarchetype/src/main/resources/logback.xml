@@ -5,13 +5,17 @@
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n</pattern>
     </encoder>
   </appender>
- 
+
   <!-- API is in debug, all else is in error -->
   <logger name="api" level="DEBUG" additivity="false">
     <appender-ref ref="STDOUT" />
   </logger>
- 
-  <root level="ERROR">          
+  
+  <logger name="tinder" level="DEBUG" additivity="false">
     <appender-ref ref="STDOUT" />
-  </root>  
+  </logger>
+
+  <root level="ERROR">
+    <appender-ref ref="STDOUT" />
+  </root>
 </configuration>

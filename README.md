@@ -18,6 +18,26 @@ It relies on source code generation, and inert runtimes. What does that mean? Ti
 * No hard troubleshooting and debugging of complicated production issues that can't be reproduced because the runtime DI and tools are too dynamic.
 * Compile time safety of bindings and injections (Using Dagger 2, for example.)
 
+## How to try it
 
+* Check out this repository,
+* do a `./mvnw install` from the `tinder` folder
+* do a `./mvnw package` from the `tinderarchetype` folder
+* run the sample with `java -jar target/app.jar` from the `tinderarchetype` folder.
+* open browser on http://localhost:4567/
 
+The archetype provided takes care already of building the sqagger.yml and the swagger-ui, and also for building a docker image out of it (all based on maven plugins).
 
+The main dependency used is `tinder-core`, however `tinder-processors `is also added as an APT step.
+
+## How to start your application
+
+Simply checkout the `tinderarchetype` and use it as a template for starting up. As for the core libraries that are required, they should be already publish on the maven central. You can also use local built snapshots in case of need, since the archetype is shading the final uber jar (only 5mb!). Or retag and push the docker image built in the maven package step.
+
+From there on you can just go and play with it.
+
+## Features implemented by Tinder
+
+On the APT processors:
+ * @Scheduled
+ * JAX-RS annotations

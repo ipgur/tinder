@@ -21,6 +21,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +37,6 @@ import java.util.Optional;
 import static java.util.Optional.empty;
 import java.util.Properties;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,11 +115,10 @@ public final class JDBILoader {
     // It only supports yaml.
     // Properties are hard coded: jdbcUrl, username, password
     // More props to come later..
-    Consumer<Path> configLoader = path -> {
+    Consumer<Reader> configLoader = reader -> {
       Map<String, Object> values;
       Yaml yaml = new Yaml();
-      values = withinReaderFromPath(path, reader -> yaml.load(reader));
-      LOG.info("Loading values from {}", path);
+      values = yaml.load(reader);
       config.setJdbcUrl(values.get("jdbcUrl").toString());
       config.setUsername(username.orElse(values.get("username").toString()));
       config.setPassword(password.orElse(values.get("password").toString()));
@@ -146,15 +146,30 @@ public final class JDBILoader {
         .filter(Files::exists)
         .findFirst();
 
-    foundPath.ifPresent(configLoader);
+    foundPath.ifPresent(path -> {
+      LOG.debug("Reading from Paths: {}", path);
+      withinReaderFromPath(path, reader -> configLoader.accept(reader));
+    });
 
     // Look for configuration in the classpath / inside jar
     // In this special case some more 'manual' coding is required because classpaths are a special case.
     if (!foundPath.isPresent()) {
-      URL res = ClassLoader.getSystemClassLoader().getResource(name + ".yml");
-      res = res == null ? ClassLoader.getSystemClassLoader().getResource(name + ".yaml") : res;
-      if (res != null) {
-        configLoader.accept(Paths.get(toUri(res)));
+      InputStream is = null;
+      try {
+        is = ClassLoader.getSystemClassLoader().getResourceAsStream(name + ".yml");
+        is = is == null ? ClassLoader.getSystemClassLoader().getResourceAsStream(name + ".yaml") : is;
+        if (is != null) {
+          LOG.debug("Reading from classpath");
+          configLoader.accept(new InputStreamReader(is));
+        }
+      } finally {
+        if (is != null) {
+          try {
+            is.close();
+          } catch (IOException ex) {
+            throw new RuntimeException(ex);
+          }
+        }
       }
     }
 
@@ -172,8 +187,8 @@ public final class JDBILoader {
    * @param url
    * @return
    */
-  static <T> T withinReaderFromPath(Path path, Function<Reader, T> fn) {
-    try (Reader r = new FileReader(path.toFile())) { return fn.apply(r); } catch (IOException ex) { throw new RuntimeException(ex); }
+  static void withinReaderFromPath(Path path, Consumer<Reader> fn) {
+    try (Reader r = new FileReader(path.toFile())) { fn.accept(r); } catch (IOException ex) { throw new RuntimeException(ex); }
   }
 
   /**

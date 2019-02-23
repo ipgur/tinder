@@ -112,8 +112,8 @@ workflows:
     jobs:
       - buildlib:
           context: mvn_central
-      - buildarchetype:
-          requires: [buildlib]
+#      - buildarchetype:
+#          requires: [buildlib]
 #      - pusharchetype:
 #          context: aws
 #          requires: [buildarchetype]
