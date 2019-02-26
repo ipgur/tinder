@@ -24,7 +24,7 @@ It relies on source code generation, and inert runtimes. What does that mean? Ti
 * do a `./mvnw install` from the `tinder` folder
 * do a `./mvnw package` from the `tinderarchetype` folder
 * run the sample with `java -jar target/app.jar` from the `tinderarchetype` folder.
-* open browser on http://localhost:4567/
+* open browser on http://localhost:8080/
 
 The archetype provided takes care already of building the sqagger.yml and the swagger-ui, and also for building a docker image out of it (all based on maven plugins).
 

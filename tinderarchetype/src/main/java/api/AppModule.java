@@ -21,7 +21,7 @@ public class AppModule extends TinderModule {
   @Provides
   @Singleton
   public TinderConfiguration getConfiguration() {
-    return configuration(); //To change body of generated methods, choose Tools | Templates.
+    return configuration();
   }
 
   @Provides
