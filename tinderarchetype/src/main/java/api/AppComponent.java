@@ -1,9 +1,10 @@
 package api;
 
-import api.db.JdbiModule;
 import dagger.Component;
+import javax.inject.Singleton;
 
-@Component(modules = {JdbiModule.class})
+@Singleton
+@Component(modules = {AppModule.class})
 public interface AppComponent {
   App app();
 }
