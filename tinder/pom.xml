@@ -103,6 +103,16 @@
       <artifactId>retrofit</artifactId>
       <version>2.5.0</version>
     </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.10.5</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.10.5</version>
+    </dependency>
     <!-- TEST TIME ONLY DEPS -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -142,8 +152,8 @@
     </dependency>
     <!-- APT -->
     <!-- Normally one would use the maven compiler plugin with annotationProcessingPaths but that does not work
-         for IDEs to find sources aftwrwards. Instead we add the dependency in the dependency list directly but
-         as 'optional' so won't be included transitively. -->
+    for IDEs to find sources aftwrwards. Instead we add the dependency in the dependency list directly but
+    as 'optional' so won't be included transitively. -->
     <dependency>
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
