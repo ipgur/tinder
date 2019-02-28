@@ -16,14 +16,18 @@
 package tinder.core.auth;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import java.sql.Connection;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import java.util.UUID;
 import java.util.function.Consumer;
+import javax.crypto.SecretKey;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -39,6 +43,7 @@ import spark.Response;
 import spark.Spark;
 import tinder.core.ImmutableApiMessage;
 import tinder.core.JsonTransformer;
+import tinder.core.helpers.GsonSerializer;
 
 /**
  * Authentication endpoint resources.
@@ -271,6 +276,79 @@ public final class AuthenticationResources {
           .mapTo(Instant.class)
           .findOnly();
     });
+
+    ImmutableTokenResult tokenResult = ImmutableTokenResult.builder()
+        .token(token)
+        // constant as long as we use the DEFAULT_TOKEN_EXPIRE_MS which is 30 minutes
+        .expiresIn("30m")
+        .expiresAt(expiresAt.toString())
+        .build();
+
+    return tr.render(tokenResult);
+  }
+
+  //
+  // Variant login: returns JWT, if you are going to use the JWT filter, you need to use this one for login instead.
+  //
+
+  /**
+   * Sets up a login endpoint that handles JTW type of tokens being returned.
+   * By default it maps to "/login"
+   * @param jdbi the JDDI instance, where the user table is.
+   * @param secret the secret used to sign JWT. Keep it private and only on the server side.
+   */
+  public static void addJWTLoginResource(Jdbi jdbi, String secret) {
+    addJWTLoginResource(jdbi, secret, empty());
+  }
+
+  /**
+   * Sets up a login endpoint that handles JTW type of tokens being returned.
+   * @param jdbi the JDDI instance, where the user table is.
+   * @param secret the secret used to sign JWT. Keep it private and only on the server side.
+   * @param resourcePath the path of the resource to bind.
+   */
+  public static void addJWTLoginResource(Jdbi jdbi, String secret, String resourcePath) {
+    addJWTLoginResource(jdbi, secret, of(resourcePath));
+  }
+
+  public static void addJWTLoginResource(Jdbi jdbi, String secret, Optional<String> resourcePath) {
+    Spark.post(resourcePath.orElse("/login"), (req, resp) -> loginJWT(jdbi, secret, req, resp));
+  }
+
+  static String loginJWT(Jdbi jdbi, String secret, Request req, Response resp) {
+    JsonTransformer tr = new JsonTransformer();
+    ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
+
+    Optional<String> optHash = jdbi.withHandle(h -> {
+      // Finds the hash code of the user but only if enabled. Returned as optional
+      return h.createQuery("select hash from tinder_users where email = :email and enabled = true")
+          .bind("email", loginData.email())
+          .mapTo(String.class)
+          .findFirst();
+    });
+
+    boolean loggedIn = optHash
+        .map(hash -> BCrypt
+            .verifyer()
+            .verify(loginData.password().toCharArray(), hash.toCharArray())
+            .verified)
+        .orElse(false);
+
+    // Unauthorized, login didn't succeed.
+    if (!loggedIn) {
+      resp.status(401);
+      return "";
+    }
+
+    Instant expiresAt = Instant.now().plusMillis(DEFAULT_TOKEN_EXPIRE_MS);
+    byte[] keyBytes = secret.getBytes();
+    SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+    String token = Jwts.builder()
+        .serializeToJsonWith(new GsonSerializer<>())
+        .setSubject(loginData.email())
+        .setExpiration(Date.from(expiresAt))
+        .signWith(key)
+        .compact();
 
     ImmutableTokenResult tokenResult = ImmutableTokenResult.builder()
         .token(token)

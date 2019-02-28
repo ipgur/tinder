@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 rragni16.
+ * Copyright 2019 Raffaele Ragni.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ import tinder.core.modules.TinderModule;
 
 /**
  *
- * @author rragni16
+ * @author Raffaele Ragni
+ *
  */
 public class RoutesTest {
   @Test
@@ -61,6 +62,9 @@ public class RoutesTest {
 
     AuthenticationResources.addLoginResource(jdbi);
     AuthenticationResources.addLoginResource(jdbi, "/myLogin");
+
+    AuthenticationResources.addJWTLoginResource(jdbi, "seekrit");
+    AuthenticationResources.addJWTLoginResource(jdbi, "seekrit", "/myJWTLogin");
 
     AuthenticationResources.addCheckTokenResource(jdbi);
     AuthenticationResources.addCheckTokenResource(jdbi, "/myChecktoken");

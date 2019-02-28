@@ -32,7 +32,6 @@ import java.util.Set;
 import javax.crypto.SecretKey;
 import org.jdbi.v3.core.Jdbi;
 import retrofit2.Retrofit;
-import retrofit2.http.Body;
 import spark.Request;
 import spark.Response;
 import spark.Spark;

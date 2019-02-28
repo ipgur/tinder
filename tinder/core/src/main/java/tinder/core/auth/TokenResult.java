@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 rragni16.
+ * Copyright 2019 Raffaele Ragni.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package tinder.core.auth;
 
-import java.time.ZonedDateTime;
 import org.immutables.value.Value.Immutable;
 
 /**
  *
- * @author rragni16
+ * @author Raffaele Ragni
  */
 @Immutable
 public interface TokenResult {
