@@ -164,11 +164,7 @@ public final class JDBILoader {
         }
       } finally {
         if (is != null) {
-          try {
-            is.close();
-          } catch (IOException ex) {
-            throw new RuntimeException(ex);
-          }
+          try { is.close(); } catch (IOException ex) { throw new RuntimeException(ex); }
         }
       }
     }

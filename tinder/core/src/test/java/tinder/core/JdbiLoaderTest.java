@@ -16,6 +16,9 @@
 package tinder.core;
 
 import com.codahale.metrics.MetricRegistry;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import static java.util.Optional.of;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,7 @@ import org.junit.jupiter.api.Test;
 public class JdbiLoaderTest {
 
   @Test
-  public void testJdbiLoaderConfig1() {
+  public void testJdbiLoaderConfig1() throws IOException {
 
     // Try the default file
     JDBILoader.load();
@@ -41,6 +44,15 @@ public class JdbiLoaderTest {
       JDBILoader.load("none");
     });
     Assertions.assertEquals("dataSource or dataSourceClassName or jdbcUrl is required.", ex.getMessage());
+
+    // Test the loader on the workdir path
+    Files.write(Paths.get("test2.yml"),
+        ("jdbcUrl: jdbc:h2:mem:test;MODE\\=PostgreSQL;DB_CLOSE_DELAY\\=-1\n" +
+        "username: sa\n" +
+        "password: \"\"").getBytes());
+    JDBILoader.load("test2");
+
+    Files.delete(Paths.get("test2.yml"));
   }
 
   @Test
