@@ -192,7 +192,7 @@ public final class AuthenticationFilter {
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
   public static void addJWTBasedFilter(String filterPath, String secret) {
-    Spark.before(filterPath, (req, resp) -> authenticateJTWFilter(secret, empty(), req, resp));
+    addJWTBasedFilter(filterPath, secret, empty());
   }
 
   /**
@@ -204,7 +204,7 @@ public final class AuthenticationFilter {
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
   public static void addJWTBasedFilter(String filterPath, String secret, Set<String> excludeEndpoints) {
-    Spark.before(filterPath, (req, resp) -> authenticateJTWFilter(secret, of(excludeEndpoints), req, resp));
+    addJWTBasedFilter(filterPath, secret, of(excludeEndpoints));
   }
 
   /**
