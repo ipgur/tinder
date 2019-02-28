@@ -22,13 +22,15 @@
 
     <docker.image>${project.groupId}/${project.artifactId}</docker.image>
 
+    <version.tinder>1.5-SNAPSHOT</version.tinder>
+
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-core</artifactId>
-      <version>1.4-SNAPSHOT</version>
+      <version>${version.tinder}</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -54,7 +56,7 @@
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-processors</artifactId>
-      <version>1.4-SNAPSHOT</version>
+      <version>${version.tinder}</version>
       <optional>true</optional>
     </dependency>
     <dependency>
