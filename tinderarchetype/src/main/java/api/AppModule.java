@@ -2,6 +2,7 @@ package api;
 
 import dagger.Module;
 import dagger.Provides;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import org.jdbi.v3.core.Jdbi;
 import tinder.core.modules.ImmutableTinderConfiguration;
@@ -28,6 +29,12 @@ public class AppModule extends TinderModule {
   @Singleton
   public Jdbi getJdbi(TinderConfiguration configuration) {
     return jdbi(configuration);
+  }
+
+  @Provides
+  @Named("jwt_secret")
+  public String jwtSecret() {
+    return "big jwt secret passphrase used to sign jwt web tokens";
   }
 
 }

@@ -3,6 +3,7 @@ package api;
 import api.resources.Example;
 import api.services.ConfigReloader;
 import javax.inject.Inject;
+import javax.inject.Named;
 import liquibase.exception.LiquibaseException;
 import org.jdbi.v3.core.Jdbi;
 import tinder.core.auth.AuthenticationFilter;
@@ -13,6 +14,7 @@ public class App {
   @Inject Jdbi jdbi;
   @Inject Example example;
   @Inject ConfigReloader configReloader;
+  @Inject @Named("jwt_secret") String secret;
 
   @Inject
   public App() {
@@ -25,13 +27,14 @@ public class App {
   @Inject public void postConstruct() {
     try {
 
+
+
       AuthenticationResources.upgradeByLiquibase(jdbi);
 
-      AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth/*");
+      AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
 
       AuthenticationResources.addRegisterResource(jdbi);
-      AuthenticationResources.addLoginResource(jdbi);
-      AuthenticationResources.addCheckTokenResource(jdbi);
+      AuthenticationResources.addJWTLoginResource(jdbi, secret);
 
     } catch (LiquibaseException ex) {
       throw new RuntimeException(ex);
