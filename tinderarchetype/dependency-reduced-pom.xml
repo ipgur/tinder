@@ -206,13 +206,13 @@
     </plugins>
   </build>
   <properties>
-    <swagger-ui.version>3.17.0</swagger-ui.version>
-    <docker.image>${project.groupId}/${project.artifactId}</docker.image>
-    <api.name>API</api.name>
     <api.version>1</api.version>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <swagger-ui.version>3.17.0</swagger-ui.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <docker.image>${project.groupId}/${project.artifactId}</docker.image>
+    <api.name>API</api.name>
     <api.resourcepackage>api.resources</api.resourcepackage>
-    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 </project>

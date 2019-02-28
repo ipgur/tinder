@@ -24,9 +24,10 @@ It relies on source code generation, and inert runtimes. What does that mean? Ti
 * do a `./mvnw install` from the `tinder` folder
 * do a `./mvnw package` from the `tinderarchetype` folder
 * run the sample with `java -jar target/app.jar` from the `tinderarchetype` folder.
+* alternatively you can start it up via docker `docker run -it --rm -p 8080:8080 archetype/tinder-archetype:1.1-SNAPSHOT`
 * open browser on http://localhost:8080/
 
-The archetype provided takes care already of building the sqagger.yml and the swagger-ui, and also for building a docker image out of it (all based on maven plugins).
+The archetype provided takes care already of building the swagger.yml and the swagger-ui, and also for building a docker image out of it (all based on maven plugins).
 
 The main dependency used is `tinder-core`, however `tinder-processors `is also added as an APT step.
 
