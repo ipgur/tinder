@@ -32,15 +32,10 @@ public class GsonDeserializer<T> implements Deserializer<T> {
 
   @Override
   public T deserialize(byte[] bytes) throws DeserializationException {
-    try {
-      return readValue(bytes);
-    } catch (IOException e) {
-      String msg = "Unable to deserialize bytes into a " + returnType.getName() + " instance: " + e.getMessage();
-      throw new DeserializationException(msg, e);
-    }
+    return readValue(bytes);
   }
 
-  protected T readValue(byte[] bytes) throws IOException {
+  protected T readValue(byte[] bytes) {
     return gson.fromJson(new String(bytes), returnType);
   }
 }

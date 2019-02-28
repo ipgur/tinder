@@ -15,7 +15,12 @@
  */
 package tinder.core.modules;
 
+import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import spark.Response;
 import spark.Spark;
 import tinder.core.JDBILoader;
 
@@ -24,6 +29,12 @@ import tinder.core.JDBILoader;
  * @author Raffaele Ragni
  */
 public class TinderModule {
+
+  public static final String MDC_REQUEST_UUID = "request_uuid";
+
+  public static final String HEADER_TINDER_REQUEST_UUID = "X-Tinder-RequestUUID";
+
+  private static final Logger LOG = LoggerFactory.getLogger(TinderModule.class);
 
   final TinderConfiguration configuration;
 
@@ -36,6 +47,9 @@ public class TinderModule {
           configuration.sparkMinThreads(),
           configuration.sparkIdleTimeoutMillis());
       configuration.sparkStaticFilesLocation().ifPresent(Spark.staticFiles::location);
+      // We always add the support for identifiable requests via the custom header
+      Spark.before((req, resp) -> { requestUUIDFilterBefore(); });
+      Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });
     }
   }
 
@@ -50,6 +64,25 @@ public class TinderModule {
    */
   public Jdbi jdbi(TinderConfiguration configuration) {
     return JDBILoader.load(configuration.jdbiInstanceName());
+  }
+
+  /**
+   * Adds the request UUID header in responses.
+   */
+  static void requestUUIDFilterBefore() {
+    String uuid = UUID.randomUUID().toString();
+    MDC.put(MDC_REQUEST_UUID, uuid);
+    LOG.info("Start of request UUID filter for request: {}", uuid);
+  }
+
+  /**
+   * Adds the request UUID header in responses.
+   */
+  static void requestUUIDFilterAfter(Response resp) {
+    String uuid = MDC.get(MDC_REQUEST_UUID);
+    resp.header(HEADER_TINDER_REQUEST_UUID, uuid);
+    LOG.info("End of request UUID filter for request: {}", uuid);
+    MDC.remove(MDC_REQUEST_UUID);
   }
 
 }

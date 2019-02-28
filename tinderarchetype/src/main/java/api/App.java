@@ -27,8 +27,6 @@ public class App {
   @Inject public void postConstruct() {
     try {
 
-
-
       AuthenticationResources.upgradeByLiquibase(jdbi);
 
       AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
