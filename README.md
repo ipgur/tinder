@@ -32,9 +32,11 @@ The main dependency used is `tinder-core`, however `tinder-processors `is also a
 
 ## How to start your application
 
-Simply checkout the `tinderarchetype` and use it as a template for starting up. As for the core libraries that are required, they should be already publish on the maven central. You can also use local built snapshots in case of need, since the archetype is shading the final uber jar (only 5mb!). Or retag and push the docker image built in the maven package step.
+Simply checkout the `tinderarchetype` and use it as a template for starting up. As for the core libraries that are required, they should be already public on the maven central. You can also use local built snapshots in case of need (check if pom uses snapshots, if so then you need to build tinder first), since the archetype is shading the final uber jar (only 5mb!). You can also retag and push the docker image built in the maven package step.
 
 From there on you can just go and play with it.
+
+Performance tests done using wrk and a medium class laptop resulted in handling 37000 requests per second.
 
 ## Features implemented by Tinder
 
