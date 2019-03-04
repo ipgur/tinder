@@ -73,6 +73,12 @@ public interface TinderConfiguration {
   @Default default boolean useJmxMetrics() { return true; }
 
   /**
+   * If to setup the /healthcheck endpoint (only works with useSpark = true).
+   * @return if to setup the /healthcheck endpoint
+   */
+  @Default default boolean useHealtCheckEndpoint() { return true; }
+
+  /**
    * The configuration name for the jdbi instance.
    * If you don't use jdbi, then just don't inject it via "@Inject JDBI Jdbi".
    * Default instance name is "jdbi"

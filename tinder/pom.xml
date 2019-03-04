@@ -85,16 +85,6 @@
     </dependency>
     <dependency>
       <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-jdbi</artifactId>
-      <version>3.0.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-jvm</artifactId>
-      <version>3.0.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-healthchecks</artifactId>
       <version>3.0.2</version>
     </dependency>
@@ -173,6 +163,7 @@
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
       <version>2.7.5</version>
+      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
     <dependency>

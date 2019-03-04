@@ -27,6 +27,7 @@ import org.slf4j.MDC;
 import spark.Response;
 import spark.Spark;
 import tinder.core.JDBILoader;
+import tinder.core.modules.metrics.HealthCheckRoute;
 
 /**
  *
@@ -67,6 +68,11 @@ public class TinderModule {
       // We always add the support for identifiable requests via the custom header
       Spark.before((req, resp) -> { requestUUIDFilterBefore(); });
       Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });
+      // Map the healthchecks
+      if (configuration.useHealtCheckEndpoint()) {
+        LOG.info("Adding /healthcheck");
+        Spark.get("/healthcheck", new HealthCheckRoute(healthCheckRegistry));
+      }
     }
 
     // Register JMX reporter for metrics if enabled and have it start and go along.

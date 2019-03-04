@@ -32,11 +32,17 @@
       <artifactId>tinder-core</artifactId>
       <version>${version.tinder}</version>
     </dependency>
+    <!-- Decide here which driver to use, pick one, or put your own DB... -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>1.4.197</version>
     </dependency>
+<!--    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.5</version>
+    </dependency>-->
     <!-- APT -->
     <!-- Normally one would use the maven compiler plugin with annotationProcessingPaths but that does not work
     for IDEs to find sources aftwrwards. Instead we add the dependency in the dependency list directly but
@@ -45,24 +51,22 @@
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger-compiler</artifactId>
       <version>2.21</version>
+      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
       <version>2.7.5</version>
+      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.github.raffaeleragni</groupId>
       <artifactId>tinder-processors</artifactId>
       <version>${version.tinder}</version>
+      <scope>provided</scope>
       <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.2.5</version>
     </dependency>
   </dependencies>
 
@@ -180,6 +184,22 @@
           </replacements>
         </configuration>
       </plugin>
+      <!-- Copy the lib dependencies in target.-->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.1.0</version>
@@ -244,6 +264,14 @@
                   </excludes>
                 </filter>
               </filters>
+              <!-- Must exclude the optional dependencies for shading -->
+              <artifactSet>
+                <excludes>
+                  <exclude>com.google.dagger:dagger-compiler:*</exclude>
+                  <exclude>org.immutables:value:*</exclude>
+                  <exclude>com.github.raffaeleragni:tinder-processors:*</exclude>
+                </excludes>
+              </artifactSet>
             </configuration>
           </execution>
         </executions>
