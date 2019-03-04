@@ -69,10 +69,10 @@ import tinder.core.TypeConverter;
 public class ResourceProcessor extends AbstractProcessor {
 
   private static final String PREFIX = "Resource";
-  private static final String PARAM_SOURCECLASS = "_source";
-  private static final String PARAM_CONVERTER = "_converter";
-  private static final String PARAM_REQUEST = "_request";
-  private static final String PARAM_RESPONSE = "_response";
+  private static final String PARAM_SOURCECLASS = "source";
+  private static final String PARAM_CONVERTER = "converter";
+  private static final String PARAM_REQUEST = "request";
+  private static final String PARAM_RESPONSE = "response";
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
@@ -260,21 +260,21 @@ public class ResourceProcessor extends AbstractProcessor {
       PathParam pathParam = param.getAnnotation(PathParam.class);
       boolean createdVar = false;
       if (headerParam != null) {
-        blockStrings.addStatement("$T _$L = $L.headers($S)", String.class, name, PARAM_REQUEST, headerParam.value());
+        blockStrings.addStatement("$T str$L = $L.headers($S)", String.class, name, PARAM_REQUEST, headerParam.value());
         createdVar = true;
       } else if (queryParam != null) {
-        blockStrings.addStatement("$T _$L = $L.queryParams($S)", String.class, name, PARAM_REQUEST, queryParam.value());
+        blockStrings.addStatement("$T str$L = $L.queryParams($S)", String.class, name, PARAM_REQUEST, queryParam.value());
         createdVar = true;
       } else if (pathParam != null) {
-        blockStrings.addStatement("$T _$L = $L.params($S)", String.class, name, PARAM_REQUEST, ":" + pathParam.value());
+        blockStrings.addStatement("$T str$L = $L.params($S)", String.class, name, PARAM_REQUEST, ":" + pathParam.value());
         createdVar = true;
       } else {
         // No annotation, we go from body. There should be only one of these.
-        blockStrings.addStatement("$T _$L = $L.body()", String.class, name, PARAM_REQUEST);
+        blockStrings.addStatement("$T str$L = $L.body()", String.class, name, PARAM_REQUEST);
         createdVar = true;
       }
       if (createdVar) {
-        blockVars.addStatement("$T $L = $L.fromString(_$L, $T.class)",
+        blockVars.addStatement("$T $L = $L.fromString(str$L, $T.class)",
             ClassName.get(paramType), name, PARAM_CONVERTER, name, ClassName.get(paramType));
       }
 
