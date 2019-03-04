@@ -147,7 +147,14 @@ public class ResourceProcessor extends AbstractProcessor {
       if (e.getAnnotation(Path.class) != null) {
         // Every methods with a @Path goes into the binding, if not they don't
         String path = Optional.ofNullable(e.getAnnotation(Path.class).value()).orElse("");
-        String finalPath = rootPath + "/" + path;
+        rootPath = rootPath.trim();
+        path = path.trim();
+        String finalPath;
+        if (!rootPath.endsWith("/") && !path.startsWith("/")) {
+          finalPath = rootPath + "/" + path;
+        } else {
+          finalPath = rootPath + path;
+        }
         finalPath = finalPath.replaceAll("//", "/");
 
         finalPath = finalPath.replaceAll("\\{([^\\}]*)\\}", ":$1");
