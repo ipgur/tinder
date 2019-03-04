@@ -58,6 +58,7 @@ import javax.ws.rs.QueryParam;
 import spark.Spark;
 import tinder.core.Converter;
 import tinder.core.JsonTransformer;
+import tinder.core.ResourceEvents;
 import tinder.core.TypeConverter;
 
 /**
@@ -118,6 +119,7 @@ public class ResourceProcessor extends AbstractProcessor {
   private void makeRESTBody(Element element, TypeSpec.Builder restClass) {
 
     Elements elements = processingEnv.getElementUtils();
+    Types types = processingEnv.getTypeUtils();
 
     MethodSpec.Builder bindMethod = MethodSpec.methodBuilder("bind")
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -178,9 +180,13 @@ public class ResourceProcessor extends AbstractProcessor {
       }
     }
 
-    bindMethod = bindMethod
-        .addComment("Call the init of the resource when all is connected")
-        .addStatement("$L.init()", PARAM_SOURCECLASS);
+    TypeMirror resourceEventsType = elements.getTypeElement(ResourceEvents.class.getName()).asType();
+    boolean needsInit = types.isAssignable(element.asType(), resourceEventsType);
+    if (needsInit) {
+      bindMethod = bindMethod
+          .addComment("Call the init of the resource when all is connected")
+          .addStatement("$L.init()", PARAM_SOURCECLASS);
+    }
 
     restClass.addMethod(bindMethod.build());
   }
