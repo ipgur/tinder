@@ -1,5 +1,6 @@
 package api;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Named;
@@ -23,6 +24,12 @@ public class AppModule extends TinderModule {
   @Singleton
   public TinderConfiguration getConfiguration() {
     return configuration();
+  }
+
+  @Provides
+  @Singleton
+  public HealthCheckRegistry getHealthCheckRegistry() {
+    return healthCheckRegistry();
   }
 
   @Provides
