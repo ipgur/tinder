@@ -84,6 +84,21 @@
       <version>3.0.2</version>
     </dependency>
     <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-jdbi</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-jvm</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-healthchecks</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
       <version>1.23</version>

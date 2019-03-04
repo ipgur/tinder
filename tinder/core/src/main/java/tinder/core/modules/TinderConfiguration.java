@@ -66,6 +66,13 @@ public interface TinderConfiguration {
   Optional<String> sparkStaticFilesLocation();
 
   /**
+   * Configures if to setup JMX metrics.
+   * The metric registry will be set up anyway, this is only to have aggregators for JMX retrieval.
+   * @return if to setup JMX metrics
+   */
+  @Default default boolean useJmxMetrics() { return true; }
+
+  /**
    * The configuration name for the jdbi instance.
    * If you don't use jdbi, then just don't inject it via "@Inject JDBI Jdbi".
    * Default instance name is "jdbi"

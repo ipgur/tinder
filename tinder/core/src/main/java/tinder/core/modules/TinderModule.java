@@ -15,6 +15,10 @@
  */
 package tinder.core.modules;
 
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import static java.util.Optional.of;
 import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -38,9 +42,22 @@ public class TinderModule {
 
   final TinderConfiguration configuration;
 
+  final MetricRegistry metricRegistry;
+  final HealthCheckRegistry healthCheckRegistry;
+
   public TinderModule(TinderConfiguration configuration) {
     this.configuration = configuration;
+
+    // Initialize registries.
+    // These are always initialized, and they cost nothing to initialize, all thet start is a new
+    // concurrent hash map inside at creation.
+    LOG.info("Initializing metrics and healtcheck registries...");
+    metricRegistry = new MetricRegistry();
+    healthCheckRegistry = new HealthCheckRegistry();
+
+    // Start up spark if enabled.
     if (configuration.useSpark()) {
+      LOG.info("Starting Sparkjava...");
       Spark.port(configuration.sparkPort());
       Spark.threadPool(
           configuration.sparkMaxThreads(),
@@ -51,6 +68,24 @@ public class TinderModule {
       Spark.before((req, resp) -> { requestUUIDFilterBefore(); });
       Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });
     }
+
+    // Register JMX reporter for metrics if enabled and have it start and go along.
+    if (configuration.useJmxMetrics()) {
+      LOG.info("Initializing JMX metrics reporter...");
+      JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
+      // Start it now
+      reporter.start();
+      // Make sure to terminate it at JVM end
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> reporter.stop()));
+    }
+  }
+
+  public MetricRegistry metricRegistry() {
+    return metricRegistry;
+  }
+
+  public HealthCheckRegistry healthCheckRegistry() {
+    return healthCheckRegistry;
   }
 
   public TinderConfiguration configuration() {
@@ -63,7 +98,8 @@ public class TinderModule {
    * @return jdbi instance
    */
   public Jdbi jdbi(TinderConfiguration configuration) {
-    return JDBILoader.load(configuration.jdbiInstanceName());
+    LOG.info("Returning JDBI instance {}", configuration.jdbiInstanceName());
+    return JDBILoader.load(configuration.jdbiInstanceName(), of(metricRegistry()));
   }
 
   /**
