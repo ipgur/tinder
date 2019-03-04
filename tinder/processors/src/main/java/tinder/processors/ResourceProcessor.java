@@ -288,7 +288,7 @@ public class ResourceProcessor extends AbstractProcessor {
       } else {
         result.addStatement("$L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
       }
-      result.addStatement("return null");
+      result.addStatement("return \"\"");
     } else {
       if (paramNames == null) {
         result.addStatement("return $L.$L()", PARAM_SOURCECLASS, method.getSimpleName());
