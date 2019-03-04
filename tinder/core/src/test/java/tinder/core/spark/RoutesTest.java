@@ -15,6 +15,7 @@
  */
 package tinder.core.spark;
 
+import com.codahale.metrics.health.HealthCheck;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jdbi.v3.core.Jdbi;
@@ -40,6 +41,13 @@ public class RoutesTest {
 
     TinderConfiguration configuration = ImmutableTinderConfiguration.builder().build();
     TinderModule module = new TinderModule(configuration);
+    module.healthCheckRegistry().register("test", new HealthCheck(){
+      @Override
+      protected HealthCheck.Result check() throws Exception {
+        return Result.healthy();
+      }
+    });
+
     Assertions.assertEquals(configuration, module.configuration());
 
     Jdbi jdbi = module.jdbi(configuration);
