@@ -18,6 +18,8 @@ package tinder.core.modules;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.timgroup.statsd.NonBlockingStatsDClient;
+import com.timgroup.statsd.StatsDClient;
 import static java.util.Optional.of;
 import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
@@ -50,6 +52,8 @@ public class TinderModule {
   final MetricRegistry metricRegistry;
   final HealthCheckRegistry healthCheckRegistry;
 
+  final StatsDClient statsDClient;
+
   public TinderModule(TinderConfiguration configuration) {
     this.configuration = configuration;
 
@@ -59,6 +63,12 @@ public class TinderModule {
     LOG.info(METRICS_PREFIX+"Initializing metrics and healtcheck registries...");
     metricRegistry = new MetricRegistry();
     healthCheckRegistry = new HealthCheckRegistry();
+
+    // Initialize the statsd client.
+    // Since it's UDP towards localhost, we can always start it with no big consequence.
+    LOG.info(METRICS_PREFIX+"Initializing statsd client...");
+    statsDClient = new NonBlockingStatsDClient(
+        configuration.statsDPrefix(), configuration.statsDHost(), configuration.statsDPort());
 
     // Start up spark if enabled.
     if (configuration.useSpark()) {
@@ -93,6 +103,10 @@ public class TinderModule {
       // Make sure to terminate it at JVM end
       Runtime.getRuntime().addShutdownHook(new Thread(() -> reporter.stop()));
     }
+  }
+
+  public StatsDClient statsDClient() {
+    return statsDClient;
   }
 
   public MetricRegistry metricRegistry() {

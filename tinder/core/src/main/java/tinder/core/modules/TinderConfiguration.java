@@ -88,6 +88,27 @@ public interface TinderConfiguration {
   Optional<String> sparkStaticFilesLocation();
 
   /**
+   * The prefix to use for sending statsd metrics.
+   * default is "api"
+   * @return the prefix for statsd
+   */
+  @Default default String statsDPrefix() { return "api"; }
+
+  /**
+   * The host of the statsd receiving agent.
+   * Default is localhost.
+   * @return the host for statsd target
+   */
+  @Default default String statsDHost() { return "localhost"; }
+
+  /**
+   * The post of the statsd receiving agent.
+   * It uses UDP. Default is 8125.
+   * @return port for statsd
+   */
+  @Default default int statsDPort() { return 8125; }
+
+  /**
    * Configures if to setup JMX metrics.
    * The metric registry will be set up anyway, this is only to have aggregators for JMX retrieval.
    * @return if to setup JMX metrics

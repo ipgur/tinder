@@ -1,6 +1,7 @@
 package api;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.timgroup.statsd.StatsDClient;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Named;
@@ -30,6 +31,12 @@ public class AppModule extends TinderModule {
   @Singleton
   public HealthCheckRegistry getHealthCheckRegistry() {
     return healthCheckRegistry();
+  }
+
+  @Provides
+  @Singleton
+  public StatsDClient getStatsDClient() {
+    return statsDClient();
   }
 
   @Provides
