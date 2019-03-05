@@ -49,6 +49,8 @@ import org.yaml.snakeyaml.Yaml;
  */
 public final class JDBILoader {
 
+  private static final String JDBI_PREFIX = "Jdbi :: ";
+
   private static final Logger LOG = LoggerFactory.getLogger(JDBILoader.class);
 
   private JDBILoader() {
@@ -133,7 +135,7 @@ public final class JDBILoader {
       }
     };
 
-    LOG.info("Scanning for files with base name {}", name);
+    LOG.info(JDBI_PREFIX+"Scanning for files with base name {}", name);
 
     // Look for configuration in the actual file system.
     Optional<Path> foundPath = Arrays.asList(
@@ -147,7 +149,7 @@ public final class JDBILoader {
         .findFirst();
 
     foundPath.ifPresent(path -> {
-      LOG.debug("Reading from Paths: {}", path);
+      LOG.debug(JDBI_PREFIX+"Reading from Paths: {}", path);
       withinReaderFromPath(path, reader -> configLoader.accept(reader));
     });
 
@@ -159,7 +161,7 @@ public final class JDBILoader {
         is = ClassLoader.getSystemClassLoader().getResourceAsStream(name + ".yml");
         is = is == null ? ClassLoader.getSystemClassLoader().getResourceAsStream(name + ".yaml") : is;
         if (is != null) {
-          LOG.debug("Reading from classpath");
+          LOG.debug(JDBI_PREFIX+"Reading from classpath");
           configLoader.accept(new InputStreamReader(is));
         }
       } finally {

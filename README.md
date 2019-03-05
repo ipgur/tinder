@@ -53,7 +53,7 @@ On the APT processors:
 
 On the configuration:
  * Extend the TinderModule as shown in the archetype,
- * Configuring some sparkjava parameters (https to come)
+ * Configuring some sparkjava parameters + https
  * Setup of a jdbi instance by default
  * Setup for /healthcheck endpoint
  * Implementations available for authentication filtering and endpoints (/register, /login, /checktoken) and JWT choice of implementation.

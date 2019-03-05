@@ -39,7 +39,11 @@ public class RoutesTest {
 
     // Keep all spark tests in this test, so that it won't clash with itself with the inner signleton.
 
-    TinderConfiguration configuration = ImmutableTinderConfiguration.builder().build();
+    TinderConfiguration configuration = ImmutableTinderConfiguration.builder()
+        .sparkUseHttps(true)
+        .sparkKeystoreFile("testdocs/selfsigned.jks")
+        .sparkKeystorePassword("changeit")
+        .build();
     TinderModule module = new TinderModule(configuration);
     module.healthCheckRegistry().register("test", new HealthCheck(){
       @Override

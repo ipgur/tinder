@@ -39,6 +39,10 @@ public class TinderModule {
 
   public static final String HEADER_TINDER_REQUEST_UUID = "X-Tinder-RequestUUID";
 
+  private static final String SPARK_PREFIX = "Sparjkava :: ";
+  private static final String METRICS_PREFIX = "Metrics :: ";
+  private static final String JDBI_PREFIX = "Jdbi :: ";
+
   private static final Logger LOG = LoggerFactory.getLogger(TinderModule.class);
 
   final TinderConfiguration configuration;
@@ -52,13 +56,18 @@ public class TinderModule {
     // Initialize registries.
     // These are always initialized, and they cost nothing to initialize, all thet start is a new
     // concurrent hash map inside at creation.
-    LOG.info("Initializing metrics and healtcheck registries...");
+    LOG.info(METRICS_PREFIX+"Initializing metrics and healtcheck registries...");
     metricRegistry = new MetricRegistry();
     healthCheckRegistry = new HealthCheckRegistry();
 
     // Start up spark if enabled.
     if (configuration.useSpark()) {
-      LOG.info("Starting Sparkjava...");
+      LOG.info(SPARK_PREFIX+"Starting Sparkjava...");
+      if (configuration.sparkUseHttps()) {
+        LOG.info(SPARK_PREFIX+"Enabling https for keystore {}", configuration.sparkKeystoreFile());
+        Spark.secure(configuration.sparkKeystoreFile(), configuration.sparkKeystorePassword(), null, null);
+      }
+      LOG.info(SPARK_PREFIX+"Using port {}", configuration.sparkPort());
       Spark.port(configuration.sparkPort());
       Spark.threadPool(
           configuration.sparkMaxThreads(),
@@ -70,14 +79,14 @@ public class TinderModule {
       Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });
       // Map the healthchecks
       if (configuration.useHealtCheckEndpoint()) {
-        LOG.info("Adding /healthcheck");
+        LOG.info(SPARK_PREFIX+"Adding /healthcheck");
         Spark.get("/healthcheck", new HealthCheckRoute(healthCheckRegistry));
       }
     }
 
     // Register JMX reporter for metrics if enabled and have it start and go along.
     if (configuration.useJmxMetrics()) {
-      LOG.info("Initializing JMX metrics reporter...");
+      LOG.info(METRICS_PREFIX+"Initializing JMX metrics reporter...");
       JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
       // Start it now
       reporter.start();
@@ -104,7 +113,7 @@ public class TinderModule {
    * @return jdbi instance
    */
   public Jdbi jdbi(TinderConfiguration configuration) {
-    LOG.info("Returning JDBI instance {}", configuration.jdbiInstanceName());
+    LOG.info(JDBI_PREFIX+"Returning JDBI instance {}", configuration.jdbiInstanceName());
     return JDBILoader.load(configuration.jdbiInstanceName(), of(metricRegistry()));
   }
 
@@ -114,7 +123,7 @@ public class TinderModule {
   static void requestUUIDFilterBefore() {
     String uuid = UUID.randomUUID().toString();
     MDC.put(MDC_REQUEST_UUID, uuid);
-    LOG.info("Start of request UUID filter for request: {}", uuid);
+    LOG.info(SPARK_PREFIX+"Start of request UUID filter for request: {}", uuid);
   }
 
   /**
@@ -123,7 +132,7 @@ public class TinderModule {
   static void requestUUIDFilterAfter(Response resp) {
     String uuid = MDC.get(MDC_REQUEST_UUID);
     resp.header(HEADER_TINDER_REQUEST_UUID, uuid);
-    LOG.info("End of request UUID filter for request: {}", uuid);
+    LOG.info(SPARK_PREFIX+"End of request UUID filter for request: {}", uuid);
     MDC.remove(MDC_REQUEST_UUID);
   }
 
