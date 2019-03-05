@@ -11,3 +11,12 @@
 /tinder/patterns/target/
 /tinderarchetype/src/main/resources/local.yml
 /tinderarchetype/dependency-reduced-pom.xml
+/tinder/core/nb-configuration.xml
+/tinder/nb-configuration.xml
+/tinder/patterns/nb-configuration.xml
+/tinderarchetype/nb-configuration.xml
+*.iml
+*.idea
+.project
+.classpath
+.settings
