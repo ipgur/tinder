@@ -2,6 +2,7 @@ package api.resources;
 
 import api.model.ImmutableBean;
 import api.services.ServiceExample;
+import com.timgroup.statsd.StatsDClient;
 import io.swagger.annotations.ApiOperation;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -17,12 +18,14 @@ import spark.Request;
 import spark.Response;
 import tinder.core.Resource;
 import tinder.core.ResourceEvents;
+import tinder.core.modules.metrics.StatsDHelper;
 
 @Resource
 @Path("/")
 public class Example implements ResourceEvents {
 
   @Inject ServiceExample serviceExample;
+  @Inject StatsDHelper sdh;
 
   @Inject
   public Example() {
@@ -58,7 +61,9 @@ public class Example implements ResourceEvents {
     notes = "Just a select",
     response = String.class)
   public String testdb() {
-    return serviceExample.getIt();
+    return sdh.timedAround("request.endpoint.testdb", () -> {
+      return serviceExample.getIt();
+    });
   }
 
   @POST

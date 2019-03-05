@@ -10,6 +10,7 @@ import org.jdbi.v3.core.Jdbi;
 import tinder.core.modules.ImmutableTinderConfiguration;
 import tinder.core.modules.TinderConfiguration;
 import tinder.core.modules.TinderModule;
+import tinder.core.modules.metrics.StatsDHelper;
 
 @Module
 public class AppModule extends TinderModule {
@@ -37,6 +38,12 @@ public class AppModule extends TinderModule {
   @Singleton
   public StatsDClient getStatsDClient() {
     return statsDClient();
+  }
+
+  @Provides
+  @Singleton
+  public StatsDHelper getStatsDHelper() {
+    return new StatsDHelper(statsDClient());
   }
 
   @Provides

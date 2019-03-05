@@ -16,6 +16,7 @@
 package tinder.core.spark;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.timgroup.statsd.StatsDClient;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jdbi.v3.core.Jdbi;
@@ -51,6 +52,8 @@ public class RoutesTest {
         return Result.healthy();
       }
     });
+    StatsDClient sdc = module.statsDClient();
+    Assertions.assertNotNull(sdc);
 
     Assertions.assertEquals(configuration, module.configuration());
 
