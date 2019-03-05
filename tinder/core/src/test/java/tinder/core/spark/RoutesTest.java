@@ -59,13 +59,13 @@ public class RoutesTest {
     // Test with the spark endpoints now
 
     AuthenticationFilter.addAPIBasedFilter("/auth1/*", "http://localhost:4567");
-    AuthenticationFilter.addAPIBasedFilter("/auth1-a/*", "http://localhost:4567", new HashSet(Arrays.asList("/myendpoint")));
+    AuthenticationFilter.addAPIBasedFilter("/auth1-a/*", "http://localhost:4567", new HashSet<>(Arrays.asList("/myendpoint")));
 
     AuthenticationFilter.addJWTBasedFilter("/auth2/*", "seekrit");
-    AuthenticationFilter.addJWTBasedFilter("/auth2-a/*", "seekrit", new HashSet(Arrays.asList("/myendpoint")));
+    AuthenticationFilter.addJWTBasedFilter("/auth2-a/*", "seekrit", new HashSet<>(Arrays.asList("/myendpoint")));
 
     AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth2/*");
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth3/*", new HashSet(Arrays.asList("/myendpoint")));
+    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth3/*", new HashSet<>(Arrays.asList("/myendpoint")));
 
     AuthenticationResources.addRegisterResource(jdbi);
     AuthenticationResources.addRegisterResource(jdbi, System.out::println);

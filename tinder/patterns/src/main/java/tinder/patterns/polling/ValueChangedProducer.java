@@ -48,7 +48,7 @@ public class ValueChangedProducer<T> implements Supplier<Optional<T>> {
    * @return the producer that will apply the trigger logic.
    */
   public static <T> ValueChangedProducer<T> map(Supplier<T> producer) {
-    return new ValueChangedProducer(producer);
+    return new ValueChangedProducer<T>(producer);
   }
   
   @Override

@@ -52,7 +52,7 @@ public class Poller<T> implements Runnable {
    * @param min number of seconds to wait minimally
    * @return new poller
    */
-  public Poller min(long min) {
+  public Poller<T> min(long min) {
     return min(min, TimeUnit.SECONDS);
   }
 
@@ -61,7 +61,7 @@ public class Poller<T> implements Runnable {
    * @param max number of seconds to wait maximally
    * @return new poller
    */
-  public Poller max(long max) {
+  public Poller<T> max(long max) {
     return max(max, TimeUnit.SECONDS);
   }
 
@@ -71,12 +71,12 @@ public class Poller<T> implements Runnable {
    * @param timeUnit which time unit to use
    * @return new poller
    */
-  public Poller min(long min, TimeUnit timeUnit) {
+  public Poller<T> min(long min, TimeUnit timeUnit) {
     min = TimeUnit.MILLISECONDS.convert(min, timeUnit);
     if (min < 0) {
       throw new IllegalArgumentException("min can't be negative");
     }
-    return new Poller(min, max, producer, consumer);
+    return new Poller<T>(min, max, producer, consumer);
   }
 
   /**
@@ -85,7 +85,7 @@ public class Poller<T> implements Runnable {
    * @param timeUnit new poller which time unit to use
    * @return new poller
    */
-  public Poller max(long max, TimeUnit timeUnit) {
+  public Poller<T> max(long max, TimeUnit timeUnit) {
     max = TimeUnit.MILLISECONDS.convert(max, timeUnit);
     if (max < 0) {
       throw new IllegalArgumentException("max can't be negative");
@@ -93,7 +93,7 @@ public class Poller<T> implements Runnable {
     if (max < min) {
       throw new IllegalArgumentException("max cannot be less than min");
     }
-    return new Poller(min, max, producer, consumer);
+    return new Poller<T>(min, max, producer, consumer);
   }
 
   /**
@@ -107,7 +107,7 @@ public class Poller<T> implements Runnable {
    * @return new poller.
    */
   public static <T> Poller<T> poller(Supplier<Optional<T>> producer, Consumer<T> consumer) {
-    return new Poller(0L, 0L, producer, consumer);
+    return new Poller<T>(0L, 0L, producer, consumer);
   }
 
   /**

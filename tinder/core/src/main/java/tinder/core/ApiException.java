@@ -21,6 +21,8 @@ package tinder.core;
  */
 public class ApiException extends RuntimeException {
 
+  private static final long serialVersionUID = 1L;
+  
   private final ApiMessage apiMessage;
   
   public ApiException() {

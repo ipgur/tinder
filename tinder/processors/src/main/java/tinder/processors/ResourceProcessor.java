@@ -135,7 +135,6 @@ public class ResourceProcessor extends AbstractProcessor {
     Converter converterAnn = element.getAnnotation(Converter.class);
     if (converterAnn != null) {
       // Because of some crap thing/impl, cannot get classes out of annotations and need a trick for it...
-      TypeMirror value = null;
       try {
         bindMethod = bindMethod.addParameter(converterAnn.value(), PARAM_CONVERTER);
       } catch (MirroredTypeException mte) {

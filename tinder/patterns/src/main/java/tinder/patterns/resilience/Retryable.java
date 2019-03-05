@@ -102,7 +102,7 @@ public class Retryable<T> implements Supplier<T> {
     if (operation == null) {
       throw new IllegalArgumentException("You must provide an operation for this class, operation was null.");
     }
-    return new Retryable("retryable", operation, DEFAULT_RETRIES, DEFAULT_DELAY, false, null);
+    return new Retryable<T>("retryable", operation, DEFAULT_RETRIES, DEFAULT_DELAY, false, null);
   }
   
   /**
@@ -115,7 +115,7 @@ public class Retryable<T> implements Supplier<T> {
     if (name == null) {
       throw new IllegalArgumentException("You must provide a name, name was null.");
     }
-    return new Retryable(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
   }
   
   /**
@@ -128,7 +128,7 @@ public class Retryable<T> implements Supplier<T> {
     if (maxAttempts < 1) {
       throw new IllegalArgumentException("Can't try an amount less than 1 times. Use a number greater than 0.");
     }
-    return new Retryable(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
   }
   
   /**
@@ -142,7 +142,7 @@ public class Retryable<T> implements Supplier<T> {
     if (delay < 0) {
       throw new IllegalArgumentException("Can't wait for a negative time, provide a positive number or 0.");
     }
-    return new Retryable(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
   }
   
   /**
@@ -153,7 +153,7 @@ public class Retryable<T> implements Supplier<T> {
    * @return A new Retryable with this new configuration
    */
   public Retryable<T> throwFirst() {
-    return new Retryable(name, operation, maxAttempts, delay, true, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, true, circuitBreaker);
   }
   
   /**
@@ -164,7 +164,7 @@ public class Retryable<T> implements Supplier<T> {
    * @return A new Retryable with this new configuration
    */
   public Retryable<T> throwLast() {
-    return new Retryable(name, operation, maxAttempts, delay, false, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, false, circuitBreaker);
   }
   
   /**
@@ -175,7 +175,7 @@ public class Retryable<T> implements Supplier<T> {
    * @return A new Retryable with this new configuration
    */
   public Retryable<T> circuitBreaker(Function<Throwable, Boolean> circuitBreaker) {
-    return new Retryable(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
+    return new Retryable<T>(name, operation, maxAttempts, delay, throwFirst, circuitBreaker);
   }
   
 

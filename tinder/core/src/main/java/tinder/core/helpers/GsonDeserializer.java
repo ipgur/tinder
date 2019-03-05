@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import io.jsonwebtoken.io.DeserializationException;
 import io.jsonwebtoken.io.Deserializer;
 import io.jsonwebtoken.lang.Assert;
-import java.io.IOException;
 
 // This class has been ported over from a PR that is currently not merged in jjwt: https://github.com/jwtk/jjwt/pull/414
 public class GsonDeserializer<T> implements Deserializer<T> {
@@ -13,12 +12,11 @@ public class GsonDeserializer<T> implements Deserializer<T> {
   private final Class<T> returnType;
   private final Gson gson;
 
-  @SuppressWarnings("unused") //used via reflection by RuntimeClasspathDeserializerLocator
   public GsonDeserializer() {
     this(GsonSerializer.DEFAULT_GSON);
   }
 
-  @SuppressWarnings({"unchecked", "WeakerAccess", "unused"}) // for end-users providing a custom gson
+  @SuppressWarnings("unchecked")
   public GsonDeserializer(Gson gson) {
     this(gson, (Class<T>) Object.class);
   }

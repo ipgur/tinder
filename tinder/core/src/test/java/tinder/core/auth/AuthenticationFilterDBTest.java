@@ -43,7 +43,6 @@ public class AuthenticationFilterDBTest {
     Request req = mock(Request.class);
     Response resp = mock(Response.class);
 
-    HaltException ex;
     when(req.uri()).thenReturn("/someendpoint");
 
     // Test a valid token (a 1h token)
@@ -56,13 +55,13 @@ public class AuthenticationFilterDBTest {
     validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + UUID.randomUUID().toString());
-    ex = Assertions.assertThrows(HaltException.class, () -> {
+    Assertions.assertThrows(HaltException.class, () -> {
       AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
     });
 
     // Test an invalid header
     when(req.headers("Authorization")).thenReturn("aaaa not a token");
-    ex = Assertions.assertThrows(HaltException.class, () -> {
+    Assertions.assertThrows(HaltException.class, () -> {
       AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
     });
 
@@ -70,7 +69,7 @@ public class AuthenticationFilterDBTest {
     String expiredToken = UUID.randomUUID().toString();
     addToken(jdbi, expiredToken, -3600_000L);
     when(req.headers("Authorization")).thenReturn("Bearer " + expiredToken);
-    ex = Assertions.assertThrows(HaltException.class, () -> {
+    Assertions.assertThrows(HaltException.class, () -> {
       AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
     });
 

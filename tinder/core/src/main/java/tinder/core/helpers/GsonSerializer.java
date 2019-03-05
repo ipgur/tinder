@@ -15,12 +15,10 @@ public class GsonSerializer<T> implements Serializer<T> {
   static final Gson DEFAULT_GSON = new GsonBuilder().disableHtmlEscaping().create();
   private Gson gson;
 
-  @SuppressWarnings("unused") //used via reflection by RuntimeClasspathDeserializerLocator
   public GsonSerializer() {
     this(DEFAULT_GSON);
   }
 
-  @SuppressWarnings("WeakerAccess") //intended for end-users to use when providing a custom gson
   public GsonSerializer(Gson gson) {
     Assert.notNull(gson, "gson cannot be null.");
     this.gson = gson;
@@ -33,7 +31,6 @@ public class GsonSerializer<T> implements Serializer<T> {
     return writeValueAsBytes(t);
   }
 
-  @SuppressWarnings("WeakerAccess") //for testing
   protected byte[] writeValueAsBytes(T t) {
     Object o;
     if (t instanceof byte[]) {

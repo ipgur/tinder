@@ -266,7 +266,7 @@ public final class AuthenticationFilter {
   static boolean shouldApplyFilter(Optional<Set<String>> excludeEndpoints, Request req) {
     // Thera are some well known endpoints that we must exclude from this filter.
     // They are user customizable too, but we have defaults to the defaults of the AuthenticationResources.
-    Set<String> exclusions = excludeEndpoints.orElse(new HashSet(Arrays.asList(
+    Set<String> exclusions = excludeEndpoints.orElse(new HashSet<>(Arrays.asList(
         "/register",
         "/login",
         "/checktoken",

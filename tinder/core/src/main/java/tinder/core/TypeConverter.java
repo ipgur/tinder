@@ -34,6 +34,7 @@ public interface TypeConverter {
    * @param clazz the class of the returned item
    * @return the converted value
    */
+  @SuppressWarnings("unchecked")
   default <T> T fromString(String value, Class<T> clazz) {
 
     // Here a simple default implementation for the common cases

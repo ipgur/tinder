@@ -109,6 +109,7 @@ public final class JDBILoader {
    * @param metricRegistry metric registry for the connection pool
    * @return Jdbi instance
    */
+  @SuppressWarnings("unchecked")
   public static Jdbi load(String name, Optional<String> username, Optional<String> password, Optional<MetricRegistry> metricRegistry) {
 
     HikariConfig config = new HikariConfig();
