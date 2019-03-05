@@ -38,6 +38,8 @@ import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
@@ -92,6 +94,9 @@ import tinder.core.helpers.GsonSerializer;
  */
 public final class AuthenticationResources {
 
+  private static final String PREFIX_AUTH = "Auth :: ";
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationResources.class);
+
   private AuthenticationResources() {
   }
 
@@ -114,6 +119,7 @@ public final class AuthenticationResources {
    */
   public static void upgradeByLiquibase(Jdbi jdbi) throws DatabaseException, LiquibaseException {
     jdbi.withHandle(h -> {
+      LOG.info(PREFIX_AUTH+"Upgrading auth tables through liquibase");
       h.begin();
       Connection con = h.getConnection();
       Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(con));
@@ -175,7 +181,9 @@ public final class AuthenticationResources {
    *        for security reasons)
    */
   public static void addRegisterResource(Jdbi jdbi, Optional<String> resourcePath, Optional<Consumer<String>> verificationCodeConsumer) {
-    Spark.post(resourcePath.orElse("/register"), (req, resp) -> register(jdbi, verificationCodeConsumer, req, resp));
+    String resPath = resourcePath.orElse("/register");
+    LOG.info(PREFIX_AUTH+"Adding resource {}", resPath);
+    Spark.post(resPath, (req, resp) -> register(jdbi, verificationCodeConsumer, req, resp));
   }
 
   /**
@@ -236,7 +244,9 @@ public final class AuthenticationResources {
   }
 
   public static void addLoginResource(Jdbi jdbi, Optional<String> resourcePath) {
-    Spark.post(resourcePath.orElse("/login"), (req, resp) -> login(jdbi, req, resp));
+    String resPath = resourcePath.orElse("/login");
+    LOG.info(PREFIX_AUTH+"Adding resource {}, UUID token version", resPath);
+    Spark.post(resPath, (req, resp) -> login(jdbi, req, resp));
   }
 
   static String login(Jdbi jdbi, Request req, Response resp) {
@@ -312,7 +322,9 @@ public final class AuthenticationResources {
   }
 
   public static void addJWTLoginResource(Jdbi jdbi, String secret, Optional<String> resourcePath) {
-    Spark.post(resourcePath.orElse("/login"), (req, resp) -> loginJWT(jdbi, secret, req, resp));
+    String resPath = resourcePath.orElse("/login");
+    LOG.info(PREFIX_AUTH+"Adding resource {}, JWT version", resPath);
+    Spark.post(resPath, (req, resp) -> loginJWT(jdbi, secret, req, resp));
   }
 
   static String loginJWT(Jdbi jdbi, String secret, Request req, Response resp) {
@@ -373,7 +385,9 @@ public final class AuthenticationResources {
   }
 
   public static void addCheckTokenResource(Jdbi jdbi, Optional<String> resourcePath) {
-    Spark.post(resourcePath.orElse("/checktoken"), (req, resp) -> checkToken(jdbi, req, resp));
+    String resPath = resourcePath.orElse("/checktoken");
+    LOG.info(PREFIX_AUTH+"Adding resource {}", resPath);
+    Spark.post(resPath, (req, resp) -> checkToken(jdbi, req, resp));
   }
 
   static String checkToken(Jdbi jdbi, Request req, Response resp) {

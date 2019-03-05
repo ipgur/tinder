@@ -31,6 +31,8 @@ import static java.util.Optional.of;
 import java.util.Set;
 import javax.crypto.SecretKey;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import retrofit2.Retrofit;
 import spark.Request;
 import spark.Response;
@@ -72,6 +74,9 @@ import tinder.core.helpers.GsonDeserializer;
  */
 public final class AuthenticationFilter {
 
+  private static final String PREFIX_AUTH = "Auth :: ";
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationFilter.class);
+
   public static final String REQ_EMAIL = "email";
   public static final String REQ_USER = REQ_EMAIL;
 
@@ -109,6 +114,7 @@ public final class AuthenticationFilter {
    * @param filterPath the filter Path where the authentication will be checked. can use wildcards *
    */
   public static void addDatabaseBasedFilter(Jdbi jdbi, String filterPath, Optional<Set<String>> excludeEndpoints) {
+    LOG.info(PREFIX_AUTH+"Adding database authentication filter on {}", filterPath);
     Spark.before(filterPath, (req, resp) -> authenticateDatabaseFilter(jdbi, excludeEndpoints, req, resp));
   }
 
@@ -161,6 +167,7 @@ public final class AuthenticationFilter {
         .baseUrl(apiBaseURL)
         .build();
     AuthenticationService service = retrofit.create(AuthenticationService.class);
+    LOG.info(PREFIX_AUTH+"Adding remote API call authentication filter on {}", filterPath);
     Spark.before(filterPath, (req, resp) -> authenticateAPIFilter(service, excludeEndpoints, req, resp));
   }
 
@@ -216,6 +223,7 @@ public final class AuthenticationFilter {
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
   public static void addJWTBasedFilter(String filterPath, String secret, Optional<Set<String>> excludeEndpoints) {
+    LOG.info(PREFIX_AUTH+"Adding JWT authentication filter on {}", filterPath);
     Spark.before(filterPath, (req, resp) -> authenticateJTWFilter(secret, excludeEndpoints, req, resp));
   }
 
