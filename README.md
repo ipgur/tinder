@@ -42,5 +42,67 @@ Performance tests done using wrk and a medium class laptop resulted in handling 
 ## Features implemented by Tinder
 
 On the APT processors:
- * @Scheduled
- * JAX-RS annotations
+ * @Scheduling on top of a class that needs periodic activation
+   * @PeriodicallyScheduled on the method that needs to be periodically scheduled
+ * JAX-RS annotations that bind to Sparkjava, Supported annotations are:
+   * @Resource to mark a resource, this annotation comes from tinder.
+   * @Path
+   * @GET, @POST, @PUT, @PATCH, @DELETE
+   * @PathParam, @QueryParam, @@headerParam in parameters
+   * parameters in path specified by "{}" (conversion is made on source generation)
+
+On the configuration:
+ * Extend the TinderModule as shown in the archetype,
+ * Configuring some sparkjava parameters (https to come)
+ * Setup of a jdbi instance by default
+ * Setup for /healthcheck endpoint
+ * Implementations available for authentication filtering and endpoints (/register, /login, /checktoken) and JWT choice of implementation.
+
+## Some examples
+
+A simple api resource.
+
+```java
+@Resource
+@Path("/")
+public class Example {
+  public Example() {
+    // This is the binding of the resource, you can decide to do it in different manners
+    // here we choose to go via constructor just for simplicity of the example.
+    // ResourceExample is the generated class via APT, they are in the form of Resource<name>
+    ResourceExample.bind(this);
+  }
+  @POST
+  @Path("/echo/")
+  public String echo(String input) {
+    return input;
+  }
+}
+```
+
+Setting up authentication filters, endpoints and a healtcheck.
+
+```java
+  public static void main(String[] args) {
+    ...
+
+    // using liquibase to create/update database tables.
+    // not needed normally if you manage them yourself.
+    AuthenticationResources.upgradeByLiquibase(jdbi);
+
+    // specifying a path that needs authentication
+    // since the /register and /login endpoints are in the root, it's best if
+    // you do not use a root wildcard, even if the class knows how to ignore them.
+    AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
+
+    // add the /register
+    AuthenticationResources.addRegisterResource(jdbi);
+    // add the /login
+    AuthenticationResources.addJWTLoginResource(jdbi, secret);
+
+    // A custom healthcheck (APIHealthCheck is custom, not part of tinder core)
+    healthCheckRegistry.register("jdbi", new APIHealthCheck(jdbi));
+  }
+```
+
+
