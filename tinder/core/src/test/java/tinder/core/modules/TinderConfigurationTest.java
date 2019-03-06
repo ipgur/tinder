@@ -30,11 +30,11 @@ public class TinderConfigurationTest {
     TinderConfiguration configuration = ImmutableTinderConfiguration.builder()
         .build();
 
-    Assertions.assertEquals(true, configuration.useSpark());
-    Assertions.assertEquals(8080, configuration.sparkPort());
-    Assertions.assertEquals(-1, configuration.sparkMinThreads());
-    Assertions.assertEquals(-1, configuration.sparkMaxThreads());
-    Assertions.assertEquals(-1, configuration.sparkIdleTimeoutMillis());
+    Assertions.assertEquals(true, configuration.useHttp());
+    Assertions.assertEquals(8080, configuration.httpPort());
+    Assertions.assertEquals(-1, configuration.httpMinThreads());
+    Assertions.assertEquals(-1, configuration.httpMaxThreads());
+    Assertions.assertEquals(-1, configuration.httpIdleTimeoutMillis());
     Assertions.assertEquals("jdbi", configuration.jdbiInstanceName());
   }
 

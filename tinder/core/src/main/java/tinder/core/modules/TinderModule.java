@@ -71,19 +71,19 @@ public class TinderModule {
         configuration.statsDPrefix(), configuration.statsDHost(), configuration.statsDPort());
 
     // Start up spark if enabled.
-    if (configuration.useSpark()) {
+    if (configuration.useHttp()) {
       LOG.info(SPARK_PREFIX+"Starting Sparkjava...");
-      if (configuration.sparkUseHttps()) {
-        LOG.info(SPARK_PREFIX+"Enabling https for keystore {}", configuration.sparkKeystoreFile());
-        Spark.secure(configuration.sparkKeystoreFile(), configuration.sparkKeystorePassword(), null, null);
+      if (configuration.httpUseSecure()) {
+        LOG.info(SPARK_PREFIX+"Enabling https for keystore {}", configuration.httpKeystoreFile());
+        Spark.secure(configuration.httpKeystoreFile(), configuration.httpKeystorePassword(), null, null);
       }
-      LOG.info(SPARK_PREFIX+"Using port {}", configuration.sparkPort());
-      Spark.port(configuration.sparkPort());
+      LOG.info(SPARK_PREFIX+"Using port {}", configuration.httpPort());
+      Spark.port(configuration.httpPort());
       Spark.threadPool(
-          configuration.sparkMaxThreads(),
-          configuration.sparkMinThreads(),
-          configuration.sparkIdleTimeoutMillis());
-      configuration.sparkStaticFilesLocation().ifPresent(Spark.staticFiles::location);
+          configuration.httpMaxThreads(),
+          configuration.httpMinThreads(),
+          configuration.httpIdleTimeoutMillis());
+      configuration.httpStaticFilesLocation().ifPresent(Spark.staticFiles::location);
       // We always add the support for identifiable requests via the custom header
       Spark.before((req, resp) -> { requestUUIDFilterBefore(); });
       Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });

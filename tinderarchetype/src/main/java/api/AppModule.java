@@ -19,7 +19,7 @@ public class AppModule extends TinderModule {
   public AppModule() {
     super(ImmutableTinderConfiguration.builder()
         // Add your configuration here...
-        .sparkStaticFilesLocation("/docs")
+        .httpStaticFilesLocation("/docs")
         .build());
 
     // Add this before anything else, for obvious security reasons.
