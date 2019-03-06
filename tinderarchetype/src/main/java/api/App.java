@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import liquibase.exception.LiquibaseException;
 import org.jdbi.v3.core.Jdbi;
-import tinder.core.auth.AuthenticationFilter;
 import tinder.core.auth.AuthenticationResources;
 
 public class App {
@@ -30,10 +29,9 @@ public class App {
   @Inject public void postConstruct() {
     try {
 
+      // Add the extra parts after all endpoints are installed
+
       AuthenticationResources.upgradeByLiquibase(jdbi);
-
-      AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
-
       AuthenticationResources.addRegisterResource(jdbi);
       AuthenticationResources.addJWTLoginResource(jdbi, secret);
 
