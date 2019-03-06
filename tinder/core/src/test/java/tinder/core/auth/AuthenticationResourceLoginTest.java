@@ -15,8 +15,8 @@
  */
 package tinder.core.auth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.javalin.Context;
+import io.javalin.Javalin;
 import io.jsonwebtoken.security.Keys;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -28,11 +28,7 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import spark.Request;
-import spark.Response;
 import tinder.core.JDBILoader;
-import tinder.core.JsonTransformer;
-import tinder.core.helpers.GsonDeserializer;
 
 /**
  *
@@ -43,7 +39,8 @@ public class AuthenticationResourceLoginTest {
   @Test
   public void testLogin() throws LiquibaseException {
     Jdbi jdbi = JDBILoader.load();
-    AuthenticationResources.upgradeByLiquibase(jdbi);
+    AuthenticationResources ar = new AuthenticationResources(mock(Javalin.class), jdbi);
+    ar.upgradeByLiquibase();
 
     // Add a sample user
     jdbi.withHandle(h -> {
@@ -54,10 +51,9 @@ public class AuthenticationResourceLoginTest {
       return null;
     });
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
-    when(req.body()).thenReturn("{\"email\": \"testlogin@test.bb\", \"password\": \"12345678\"}");
-    AuthenticationResources.login(jdbi, req, resp);
+    Context ctx = mock(Context.class);
+    when(ctx.body()).thenReturn("{\"email\": \"testlogin@test.bb\", \"password\": \"12345678\"}");
+    AuthenticationResources.login(jdbi, ctx);
 
     String token = jdbi.withHandle(h -> {
       return h.createQuery("select token from tinder_tokens where email = :email")
@@ -68,20 +64,21 @@ public class AuthenticationResourceLoginTest {
     Assertions.assertNotNull(token);
 
     // Try a bad login
-    when(req.body()).thenReturn("{\"email\": \"testlogin@test.bb\", \"password\": \"aaa\"}");
-    AuthenticationResources.login(jdbi, req, resp);
-    verify(resp).status(401);
+    when(ctx.body()).thenReturn("{\"email\": \"testlogin@test.bb\", \"password\": \"aaa\"}");
+    AuthenticationResources.login(jdbi, ctx);
+    verify(ctx).status(401);
   }
 
   @Test
   public void testJWTLogin() throws LiquibaseException {
-    JsonTransformer tr = new JsonTransformer();
     SecureRandom random = new SecureRandom();
     String secret = new BigInteger(500, random).toString(32);
     byte[] keyBytes = secret.getBytes();
     SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+
     Jdbi jdbi = JDBILoader.load();
-    AuthenticationResources.upgradeByLiquibase(jdbi);
+    AuthenticationResources ar = new AuthenticationResources(mock(Javalin.class), jdbi);
+    ar.upgradeByLiquibase();
 
     // Add a sample user
     jdbi.withHandle(h -> {
@@ -92,23 +89,14 @@ public class AuthenticationResourceLoginTest {
       return null;
     });
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
-    when(req.body()).thenReturn("{\"email\": \"testlogin@test.cc\", \"password\": \"12345678\"}");
-    String json = AuthenticationResources.loginJWT(jdbi, secret, req, resp);
-
-    ImmutableTokenResult result = tr.parse(json, ImmutableTokenResult.class);
-    Claims body = (Claims) Jwts.parser()
-        .deserializeJsonWith(new GsonDeserializer<>())
-        .setSigningKey(key)
-        .parse(result.token())
-        .getBody();
-    Assertions.assertEquals("testlogin@test.cc", body.getSubject());
+    Context ctx = mock(Context.class);
+    when(ctx.body()).thenReturn("{\"email\": \"testlogin@test.cc\", \"password\": \"12345678\"}");
+    AuthenticationResources.loginJWT(jdbi, secret, ctx);
 
     // Try a bad login
-    when(req.body()).thenReturn("{\"email\": \"testlogin@test.cc\", \"password\": \"aaa\"}");
-    AuthenticationResources.loginJWT(jdbi, secret, req, resp);
-    verify(resp).status(401);
+    when(ctx.body()).thenReturn("{\"email\": \"testlogin@test.cc\", \"password\": \"aaa\"}");
+    AuthenticationResources.loginJWT(jdbi, secret, ctx);
+    verify(ctx).status(401);
   }
 
 }

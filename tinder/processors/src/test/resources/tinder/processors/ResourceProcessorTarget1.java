@@ -15,6 +15,7 @@
  */
 package tinder.processors;
 
+import io.javalin.Context;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -26,8 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import spark.Request;
-import spark.Response;
 import tinder.core.Resource;
 
 /**
@@ -58,13 +57,13 @@ public class ResourceProcessorTarget1 {
 
   @PATCH
   @Path("/raw2")
-  public void raw2(Request req, Response resp) {
+  public void raw2(Context ctx) {
 
   }
 
   @PUT
   @Path("/raw")
-  public void raw(Request req, Response resp) {
+  public void raw(Context ctx) {
 
   }
 

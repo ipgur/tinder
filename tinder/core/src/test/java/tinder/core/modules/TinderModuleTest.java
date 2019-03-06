@@ -15,12 +15,12 @@
  */
 package tinder.core.modules;
 
+import io.javalin.Context;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import org.slf4j.MDC;
-import spark.Response;
 import static tinder.core.modules.TinderModule.HEADER_TINDER_REQUEST_UUID;
 import static tinder.core.modules.TinderModule.MDC_REQUEST_UUID;
 
@@ -32,16 +32,16 @@ public class TinderModuleTest {
 
   @Test
   public void testModule() {
-    Response resp = mock(Response.class);
+    Context ctx = mock(Context.class);
 
     TinderModule.requestUUIDFilterBefore();
 
     String uuid = MDC.get(MDC_REQUEST_UUID);
     Assertions.assertTrue(uuid != null && !uuid.isEmpty());
 
-    TinderModule.requestUUIDFilterAfter(resp);
-    
-    verify(resp).header(HEADER_TINDER_REQUEST_UUID, uuid);
+    TinderModule.requestUUIDFilterAfter(ctx);
+
+    verify(ctx).header(HEADER_TINDER_REQUEST_UUID, uuid);
   }
 
 }

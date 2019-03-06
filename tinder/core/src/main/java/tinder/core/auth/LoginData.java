@@ -15,6 +15,8 @@
  */
 package tinder.core.auth;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value.Immutable;
 
 /**
@@ -22,6 +24,8 @@ import org.immutables.value.Value.Immutable;
  * @author Raffaele Ragni
  */
 @Immutable
+@JsonSerialize(as = ImmutableLoginData.class)
+@JsonDeserialize(as = ImmutableLoginData.class)
 public interface LoginData {
 
   /**

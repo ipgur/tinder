@@ -15,6 +15,9 @@
  */
 package tinder.core.auth;
 
+import io.javalin.Context;
+import io.javalin.HttpResponseException;
+import io.javalin.Javalin;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -24,6 +27,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import java.time.Instant;
 import java.util.Arrays;
+import static java.util.Collections.emptyMap;
 import java.util.HashSet;
 import java.util.Optional;
 import static java.util.Optional.empty;
@@ -34,13 +38,10 @@ import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retrofit2.Retrofit;
-import spark.Request;
-import spark.Response;
-import spark.Spark;
 import tinder.core.helpers.GsonDeserializer;
 
 /**
- * Applies authentication filtering to the current sparkjava set.
+ * Applies authentication filtering to the current javalin set.
  * It comes with some default API designs, but remains parametric with endpoint
  * URIs and filter patterns.
  * The basic back end implementation is what remains mostly unchanged.
@@ -80,7 +81,12 @@ public final class AuthenticationFilter {
   public static final String REQ_EMAIL = "email";
   public static final String REQ_USER = REQ_EMAIL;
 
-  private AuthenticationFilter() {
+  private final Javalin javalin;
+  private final Jdbi jdbi;
+
+  public AuthenticationFilter(Javalin javalin, Jdbi jdbi) {
+    this.javalin = javalin;
+    this.jdbi = jdbi;
   }
 
   /**
@@ -90,36 +96,33 @@ public final class AuthenticationFilter {
    * authentication database.
    * If you are building a model of multiple satellite APIs that contact a centralized authentication API, use the other
    * implementation addAPIBasedFilter().
-   * @param jdbi the jdbi instance of the database we want to use.
    * @param filterPath the filter Path where the authentication will be checked. can use wildcards *
    */
-  public static void addDatabaseBasedFilter(Jdbi jdbi, String filterPath) {
-    addDatabaseBasedFilter(jdbi, filterPath, empty());
+  public void addDatabaseBasedFilter(String filterPath) {
+    addDatabaseBasedFilter(filterPath, empty());
   }
 
   /**
    * Variant with excluding endpoints
-   * @param jdbi the jdbi instance of the database we want to use.
    * @param excludeEndpoints which endpoints to exclude from this filter.
    * @param filterPath the filter Path where the authentication will be checked. can use wildcards *
    */
-  public static void addDatabaseBasedFilter(Jdbi jdbi, String filterPath, Set<String> excludeEndpoints) {
-    addDatabaseBasedFilter(jdbi, filterPath, of(excludeEndpoints));
+  public void addDatabaseBasedFilter(String filterPath, Set<String> excludeEndpoints) {
+    addDatabaseBasedFilter(filterPath, of(excludeEndpoints));
   }
 
   /**
    * Variant with excluding endpoints
-   * @param jdbi the jdbi instance of the database we want to use.
    * @param excludeEndpoints which endpoints to exclude from this filter.
    * @param filterPath the filter Path where the authentication will be checked. can use wildcards *
    */
-  public static void addDatabaseBasedFilter(Jdbi jdbi, String filterPath, Optional<Set<String>> excludeEndpoints) {
+  public void addDatabaseBasedFilter(String filterPath, Optional<Set<String>> excludeEndpoints) {
     LOG.info(PREFIX_AUTH+"Adding database authentication filter on {}", filterPath);
-    Spark.before(filterPath, (req, resp) -> authenticateDatabaseFilter(jdbi, excludeEndpoints, req, resp));
+    javalin.before(filterPath, c -> authenticateDatabaseFilter(jdbi, excludeEndpoints, c));
   }
 
-  static void authenticateDatabaseFilter(Jdbi jdbi, Optional<Set<String>> excludeEndpoints, Request req, Response resp) {
-    if (!shouldApplyFilter(excludeEndpoints, req)) {
+  static void authenticateDatabaseFilter(Jdbi jdbi, Optional<Set<String>> excludeEndpoints, Context ctx) {
+    if (!shouldApplyFilter(excludeEndpoints, ctx)) {
       // Don't check authentication for the exclusion list.
       return;
     }
@@ -128,13 +131,13 @@ public final class AuthenticationFilter {
     // database bypass case.
     // The main difference is that this is a filter and only alters the repsonse in case of 401 unauthenticated.
     // Most of the code will look the same.
-    String authHeader = req.headers("Authorization");
+    String authHeader = ctx.header("Authorization");
     authHeader = authHeader == null ? "" : authHeader.trim();
 
     // Can't accept other token types, at least not in this implementaion
     // devs can implement their own if they want
     if (!authHeader.toLowerCase().startsWith("Bearer".toLowerCase())) {
-      Spark.halt(401, "Only bearer tokens are supported");
+      throw new HttpResponseException(401, "Only bearer tokens are supported", emptyMap());
     }
 
     String token = authHeader.substring("Bearer".length()).trim();
@@ -150,40 +153,40 @@ public final class AuthenticationFilter {
     });
 
     if (!email.isPresent()) {
-      Spark.halt(401, "Unauthorized");
+      throw new HttpResponseException(401, "Unauthorized", emptyMap());
     }
   }
 
-  public static void addAPIBasedFilter(String filterPath, String apiBaseURL) {
+  public void addAPIBasedFilter(String filterPath, String apiBaseURL) {
     addAPIBasedFilter(filterPath, apiBaseURL, empty());
   }
 
-  public static void addAPIBasedFilter(String filterPath, String apiBaseURL, Set<String> excludeEndpoints) {
+  public void addAPIBasedFilter(String filterPath, String apiBaseURL, Set<String> excludeEndpoints) {
     addAPIBasedFilter(filterPath, apiBaseURL, of(excludeEndpoints));
   }
 
-  public static void addAPIBasedFilter(String filterPath, String apiBaseURL, Optional<Set<String>> excludeEndpoints) {
+  public void addAPIBasedFilter(String filterPath, String apiBaseURL, Optional<Set<String>> excludeEndpoints) {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(apiBaseURL)
         .build();
     AuthenticationService service = retrofit.create(AuthenticationService.class);
     LOG.info(PREFIX_AUTH+"Adding remote API call authentication filter on {}", filterPath);
-    Spark.before(filterPath, (req, resp) -> authenticateAPIFilter(service, excludeEndpoints, req, resp));
+    javalin.before(filterPath, c -> authenticateAPIFilter(service, excludeEndpoints, c));
   }
 
-  static void authenticateAPIFilter(AuthenticationService service, Optional<Set<String>> excludeEndpoints, Request req, Response resp) {
-    if (!shouldApplyFilter(excludeEndpoints, req)) {
+  static void authenticateAPIFilter(AuthenticationService service, Optional<Set<String>> excludeEndpoints, Context ctx) {
+    if (!shouldApplyFilter(excludeEndpoints, ctx)) {
       // Don't check authentication for the exclusion list.
       return;
     }
 
     // Basically just forward the call using the same authorization header.
-    String email = service.checkUrl(req.headers("Authorization"));
+    String email = service.checkUrl(ctx.header("Authorization"));
     // Add it to the req attribute if not null
     if (email != null) {
-      req.attribute(REQ_EMAIL, email);
+      ctx.attribute(REQ_EMAIL, email);
     } else {
-      Spark.halt(401, "Unauthorized");
+      throw new HttpResponseException(401, "Unauthorized", emptyMap());
     }
   }
 
@@ -198,7 +201,7 @@ public final class AuthenticationFilter {
    * @param filterPath the path where to install the filter, ex. "/authenticated/*"
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
-  public static void addJWTBasedFilter(String filterPath, String secret) {
+  public void addJWTBasedFilter(String filterPath, String secret) {
     addJWTBasedFilter(filterPath, secret, empty());
   }
 
@@ -210,7 +213,7 @@ public final class AuthenticationFilter {
    * @param excludeEndpoints which endpoints to exclude from this filter.
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
-  public static void addJWTBasedFilter(String filterPath, String secret, Set<String> excludeEndpoints) {
+  public void addJWTBasedFilter(String filterPath, String secret, Set<String> excludeEndpoints) {
     addJWTBasedFilter(filterPath, secret, of(excludeEndpoints));
   }
 
@@ -222,24 +225,24 @@ public final class AuthenticationFilter {
    * @param excludeEndpoints which endpoints to exclude from this filter.
    * @param secret the secret used to sign or verify the JWT (in this case, to verify)
    */
-  public static void addJWTBasedFilter(String filterPath, String secret, Optional<Set<String>> excludeEndpoints) {
+  public void addJWTBasedFilter(String filterPath, String secret, Optional<Set<String>> excludeEndpoints) {
     LOG.info(PREFIX_AUTH+"Adding JWT authentication filter on {}", filterPath);
-    Spark.before(filterPath, (req, resp) -> authenticateJTWFilter(secret, excludeEndpoints, req, resp));
+    javalin.before(filterPath, c -> authenticateJTWFilter(secret, excludeEndpoints, c));
   }
 
-  static void authenticateJTWFilter(String secret, Optional<Set<String>> excludeEndpoints, Request req, Response resp) {
-    if (!shouldApplyFilter(excludeEndpoints, req)) {
+  static void authenticateJTWFilter(String secret, Optional<Set<String>> excludeEndpoints, Context ctx) {
+    if (!shouldApplyFilter(excludeEndpoints, ctx)) {
       // Don't check authentication for the exclusion list.
       return;
     }
 
-    String authHeader = req.headers("Authorization");
+    String authHeader = ctx.header("Authorization");
     authHeader = authHeader == null ? "" : authHeader.trim();
 
     // Can't accept other token types, at least not in this implementaion
     // devs can implement their own if they want
     if (!authHeader.toLowerCase().startsWith("Bearer".toLowerCase())) {
-      Spark.halt(401, "Only bearer tokens are supported");
+      throw new HttpResponseException(401, "Only bearer tokens are supported", emptyMap());
     }
 
     String token = authHeader.substring("Bearer".length()).trim();
@@ -253,17 +256,15 @@ public final class AuthenticationFilter {
         .parse(token)
         .getBody();
       String email = body.getSubject();
-      req.attribute(REQ_EMAIL, email);
-      return;
+      ctx.attribute(REQ_EMAIL, email);
     } catch (ExpiredJwtException e) {
-      Spark.halt(401, "JWT is expired");
+      throw new HttpResponseException(401, "JWT is expired", emptyMap());
     } catch (UnsupportedJwtException | MalformedJwtException e) {
-      Spark.halt(401, "Not a valid JWT");
+      throw new HttpResponseException(401, "Not a valid JWT", emptyMap());
     } catch (SignatureException e) {
-      Spark.halt(401, "Not authorized");
+      throw new HttpResponseException(401, "Not authorized", emptyMap());
     }
 
-    Spark.halt(401, "Not authorized");
   }
 
   //
@@ -271,7 +272,7 @@ public final class AuthenticationFilter {
   //
 
   // Checks if the filter should be applied based on the exclusion list, or the default auth endpoints.
-  static boolean shouldApplyFilter(Optional<Set<String>> excludeEndpoints, Request req) {
+  static boolean shouldApplyFilter(Optional<Set<String>> excludeEndpoints, Context ctx) {
     // Thera are some well known endpoints that we must exclude from this filter.
     // They are user customizable too, but we have defaults to the defaults of the AuthenticationResources.
     Set<String> exclusions = excludeEndpoints.orElse(new HashSet<>(Arrays.asList(
@@ -282,7 +283,7 @@ public final class AuthenticationFilter {
     )));
 
     boolean toSkip = exclusions.stream()
-        .filter(s -> req.uri().equals(s))
+        .filter(s -> ctx.path().equals(s))
         .findFirst()
         .isPresent();
 

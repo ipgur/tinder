@@ -4,10 +4,10 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.timgroup.statsd.StatsDClient;
 import dagger.Module;
 import dagger.Provides;
+import io.javalin.Javalin;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.jdbi.v3.core.Jdbi;
-import tinder.core.auth.AuthenticationFilter;
 import tinder.core.modules.ImmutableTinderConfiguration;
 import tinder.core.modules.TinderConfiguration;
 import tinder.core.modules.TinderModule;
@@ -21,17 +21,18 @@ public class AppModule extends TinderModule {
         // Add your configuration here...
         .httpStaticFilesLocation("/docs")
         .build());
-
-    // Add this before anything else, for obvious security reasons.
-    // This constructor is the perfect place for it, but you can also move it to the app,
-    // only be careful on the order of call.
-    AuthenticationFilter.addJWTBasedFilter("/auth/*", jwtSecret());
   }
 
   @Provides
   @Singleton
   public TinderConfiguration getConfiguration() {
     return configuration();
+  }
+
+  @Provides
+  @Singleton
+  public Javalin getJavalin() {
+    return javalin();
   }
 
   @Provides

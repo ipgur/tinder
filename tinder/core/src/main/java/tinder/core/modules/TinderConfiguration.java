@@ -42,33 +42,6 @@ public interface TinderConfiguration {
   @Default default int httpPort() { return 8080; }
 
   /**
-   * This is the min threads amount used by http.
-   * @return default is -1 / unbound
-   */
-  @Default default int httpMinThreads() { return -1; }
-
-  /**
-   * This is the max threads amount used by http.
-   * @return default is -1 / unbound
-   */
-  @Default default int httpMaxThreads() { return -1; }
-
-  /**
-   * This is the timeout for idle connections.
-   * @return default is -1 / unbound
-   */
-  @Default default int httpIdleTimeoutMillis() { return -1; }
-
-  /**
-   * Enables https.
-   * You will require to pass along also the other options needed for this:
-   *   - httpKeystoreFile
-   *   - httpKeystorePassword
-   * @return enables https
-   */
-  @Default default boolean httpUseSecure() { return false; }
-
-  /**
    * Where to find the Keystore file.
    * @return the Keystore file path
    */

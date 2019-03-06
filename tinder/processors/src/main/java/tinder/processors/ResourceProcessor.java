@@ -21,6 +21,8 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import io.javalin.Context;
+import io.javalin.Javalin;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Optional;
@@ -39,7 +41,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -55,9 +56,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import spark.Spark;
-import tinder.core.Converter;
-import tinder.core.JsonTransformer;
 import tinder.core.ResourceEvents;
 import tinder.core.TypeConverter;
 
@@ -72,8 +70,8 @@ public class ResourceProcessor extends AbstractProcessor {
   private static final String PREFIX = "Resource";
   private static final String PARAM_SOURCECLASS = "source";
   private static final String PARAM_CONVERTER = "converter";
-  private static final String PARAM_REQUEST = "request";
-  private static final String PARAM_RESPONSE = "response";
+  private static final String PARAM_CTX = "ctx";
+  private static final String PARAM_JAVALIN = "javalin";
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
@@ -123,6 +121,7 @@ public class ResourceProcessor extends AbstractProcessor {
 
     MethodSpec.Builder bindMethod = MethodSpec.methodBuilder("bind")
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .addParameter(Javalin.class, PARAM_JAVALIN)
         .addParameter(TypeName.get(element.asType()), PARAM_SOURCECLASS);
 
     // Determine the root path if there is any, the annotation shouldbe there.
@@ -131,18 +130,7 @@ public class ResourceProcessor extends AbstractProcessor {
       rootPath = Optional.ofNullable(element.getAnnotation(Path.class).value()).orElse("");
     }
 
-    // Check if a converter was specified, otherwise we make our own.
-    Converter converterAnn = element.getAnnotation(Converter.class);
-    if (converterAnn != null) {
-      // Because of some crap thing/impl, cannot get classes out of annotations and need a trick for it...
-      try {
-        bindMethod = bindMethod.addParameter(converterAnn.value(), PARAM_CONVERTER);
-      } catch (MirroredTypeException mte) {
-        bindMethod = bindMethod.addParameter(TypeName.get(mte.getTypeMirror()), PARAM_CONVERTER);
-      }
-    } else {
-      bindMethod = bindMethod.addStatement("$T $L = new $T(){}", TypeConverter.class, PARAM_CONVERTER, TypeConverter.class);
-    }
+    bindMethod = bindMethod.addStatement("$T $L = new $T(){}", TypeConverter.class, PARAM_CONVERTER, TypeConverter.class);
 
     for (Element e : elements.getAllMembers((TypeElement) element)) {
       if (e.getAnnotation(Path.class) != null) {
@@ -193,28 +181,14 @@ public class ResourceProcessor extends AbstractProcessor {
   private MethodSpec.Builder methodRoute(
       MethodSpec.Builder bindMethod, Element method, String httpMethod, String path) {
 
-    // Check if a transformer was specified, otherwise we make our own.
-    Object transformerClazz;
-    Converter converterAnn = method.getAnnotation(Converter.class);
-    if (converterAnn != null) {
-      // Because of some crap thing/impl, cannot get classes out of annotations and need a trick for it...
-      try {
-        transformerClazz = converterAnn.value();
-      } catch (MirroredTypeException mte) {
-        transformerClazz = TypeName.get(mte.getTypeMirror());
-      }
-    } else {
-      transformerClazz = JsonTransformer.class;
-    }
-
     bindMethod = bindMethod
         .addCode("\n")
         .addComment(httpMethod.toUpperCase() + " " + path)
-        .addCode("$T.$L($S, ($L, $L) -> {\n", Spark.class, httpMethod.toLowerCase(), path, PARAM_REQUEST, PARAM_RESPONSE)
+        .addCode("$L.$L($S, ($L) -> {\n", PARAM_JAVALIN, httpMethod.toLowerCase(), path, PARAM_CTX)
         .addCode(CodeBlock.builder()
             .add(callBlock(method))
             .build())
-        .addCode("}, new $T());\n\n", transformerClazz);
+        .addCode("});\n\n");
     return bindMethod;
   }
 
@@ -242,13 +216,9 @@ public class ResourceProcessor extends AbstractProcessor {
 
       TypeMirror paramType = param.asType();
 
-      // As a special case we skip conversioni and pass directly these types if present.
-      if (types.isSameType(paramType, elements.getTypeElement("spark.Request").asType())) {
-        String name = PARAM_REQUEST;
-        paramNames = paramNames == null ? name : paramNames + ", " + name;
-        continue;
-      } else if (types.isSameType(paramType, elements.getTypeElement("spark.Response").asType())) {
-        String name = PARAM_RESPONSE;
+      // As a special case we skip conversion and pass directly these types if present.
+      if (types.isSameType(paramType, elements.getTypeElement(Context.class.getName()).asType())) {
+        String name = PARAM_CTX;
         paramNames = paramNames == null ? name : paramNames + ", " + name;
         continue;
       }
@@ -263,25 +233,18 @@ public class ResourceProcessor extends AbstractProcessor {
       HeaderParam headerParam = param.getAnnotation(HeaderParam.class);
       QueryParam queryParam = param.getAnnotation(QueryParam.class);
       PathParam pathParam = param.getAnnotation(PathParam.class);
-      boolean createdVar = false;
       if (headerParam != null) {
-        blockStrings.addStatement("$T str$L = $L.headers($S)", String.class, name, PARAM_REQUEST, headerParam.value());
-        createdVar = true;
+        blockStrings.addStatement("$T str$L = $L.header($S)", String.class, name, PARAM_CTX, headerParam.value());
       } else if (queryParam != null) {
-        blockStrings.addStatement("$T str$L = $L.queryParams($S)", String.class, name, PARAM_REQUEST, queryParam.value());
-        createdVar = true;
+        blockStrings.addStatement("$T str$L = $L.queryParam($S)", String.class, name, PARAM_CTX, queryParam.value());
       } else if (pathParam != null) {
-        blockStrings.addStatement("$T str$L = $L.params($S)", String.class, name, PARAM_REQUEST, ":" + pathParam.value());
-        createdVar = true;
+        blockStrings.addStatement("$T str$L = $L.pathParam($S)", String.class, name, PARAM_CTX, ":" + pathParam.value());
       } else {
         // No annotation, we go from body. There should be only one of these.
-        blockStrings.addStatement("$T str$L = $L.body()", String.class, name, PARAM_REQUEST);
-        createdVar = true;
+        blockStrings.addStatement("$T str$L = $L.body()", String.class, name, PARAM_CTX);
       }
-      if (createdVar) {
-        blockVars.addStatement("$T $L = $L.fromString(str$L, $T.class)",
-            ClassName.get(paramType), name, PARAM_CONVERTER, name, ClassName.get(paramType));
-      }
+      blockVars.addStatement("$T $L = $L.fromString(str$L, $T.class)",
+          ClassName.get(paramType), name, PARAM_CONVERTER, name, ClassName.get(paramType));
 
     }
 
@@ -293,12 +256,11 @@ public class ResourceProcessor extends AbstractProcessor {
       } else {
         result.addStatement("$L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
       }
-      result.addStatement("return \"\"");
     } else {
       if (paramNames == null) {
-        result.addStatement("return $L.$L()", PARAM_SOURCECLASS, method.getSimpleName());
+        result.addStatement("$L.json($L.$L())", PARAM_CTX, PARAM_SOURCECLASS, method.getSimpleName());
       } else {
-        result.addStatement("return $L.$L($L)", PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
+        result.addStatement("$L.json($L.$L($L))", PARAM_CTX, PARAM_SOURCECLASS, method.getSimpleName(), paramNames);
       }
     }
 

@@ -15,6 +15,8 @@
  */
 package tinder.core.auth;
 
+import io.javalin.Context;
+import io.javalin.HttpResponseException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.math.BigInteger;
@@ -29,9 +31,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import spark.HaltException;
-import spark.Request;
-import spark.Response;
 import static tinder.core.auth.AuthenticationFilter.REQ_EMAIL;
 import tinder.core.helpers.GsonSerializer;
 
@@ -46,8 +45,7 @@ public class AuthenticationFilterJWTTest {
     SecureRandom random = new SecureRandom();
     String secret = new BigInteger(500, random).toString(32);
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
+    Context ctx = mock(Context.class);
 
     byte[] keyBytes = secret.getBytes();
     SecretKey key = Keys.hmacShaKeyFor(keyBytes);
@@ -59,11 +57,11 @@ public class AuthenticationFilterJWTTest {
         .signWith(key)
         .compact();
 
-    when(req.headers(any())).thenReturn("Bearer "+ jws);
-    when(req.uri()).thenReturn("/someendpoint");
+    when(ctx.header(any())).thenReturn("Bearer "+ jws);
+    when(ctx.path()).thenReturn("/someendpoint");
 
-    AuthenticationFilter.authenticateJTWFilter(secret, empty(), req, resp);
-    verify(req).attribute(REQ_EMAIL, "user@ameil.com");
+    AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);
+    verify(ctx).attribute(REQ_EMAIL, "user@ameil.com");
 
     // Use an expired token
     jws = Jwts.builder()
@@ -72,19 +70,19 @@ public class AuthenticationFilterJWTTest {
         .setSubject("user@ameil.com")
         .signWith(key)
         .compact();
-    when(req.headers(any())).thenReturn("Bearer "+ jws);
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateJTWFilter(secret, empty(), req, resp);
+    when(ctx.header(any())).thenReturn("Bearer "+ jws);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);
     });
 
     // Use an invalid token
-    when(req.headers(any())).thenReturn("notabearer");
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateJTWFilter(secret, empty(), req, resp);
+    when(ctx.header(any())).thenReturn("notabearer");
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);
     });
-    when(req.headers(any())).thenReturn("Bearer blahblah");
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateJTWFilter(secret, empty(), req, resp);
+    when(ctx.header(any())).thenReturn("Bearer blahblah");
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);
     });
 
     // Use a different signature...
@@ -93,15 +91,15 @@ public class AuthenticationFilterJWTTest {
         .setSubject("user@ameil.com")
         .signWith(key)
         .compact();
-    when(req.headers(any())).thenReturn("Bearer "+ jws);
-    Assertions.assertThrows(HaltException.class, () -> {
+    when(ctx.header(any())).thenReturn("Bearer "+ jws);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
       AuthenticationFilter.authenticateJTWFilter(new BigInteger(500, random).toString(32),
-          empty(), req, resp);
+          empty(), ctx);
     });
 
     // Thest the skipping of filtering
-    when(req.uri()).thenReturn("/login");
-    AuthenticationFilter.authenticateJTWFilter(secret, empty(), req, resp);
+    when(ctx.path()).thenReturn("/login");
+    AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);
   }
 
 }

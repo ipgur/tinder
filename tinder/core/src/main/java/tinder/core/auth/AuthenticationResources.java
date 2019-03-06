@@ -16,11 +16,16 @@
 package tinder.core.auth;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import io.javalin.Context;
+import io.javalin.HttpResponseException;
+import io.javalin.Javalin;
+import io.javalin.json.JavalinJson;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.sql.Connection;
 import java.time.Instant;
 import java.util.Arrays;
+import static java.util.Collections.emptyMap;
 import java.util.Date;
 import java.util.Optional;
 import static java.util.Optional.empty;
@@ -40,11 +45,6 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
-import spark.Spark;
-import tinder.core.ImmutableApiMessage;
-import tinder.core.JsonTransformer;
 import tinder.core.helpers.GsonSerializer;
 
 /**
@@ -97,7 +97,12 @@ public final class AuthenticationResources {
   private static final String PREFIX_AUTH = "Auth :: ";
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationResources.class);
 
-  private AuthenticationResources() {
+  private final Javalin javalin;
+  private final Jdbi jdbi;
+
+  public AuthenticationResources(Javalin javalin, Jdbi jdbi) {
+    this.javalin = javalin;
+    this.jdbi = jdbi;
   }
 
   // 30 minutes
@@ -114,10 +119,9 @@ public final class AuthenticationResources {
   /**
    * Creates all the necessary tables needed for the user and authentication implementation of this class.
    * This operation is incremental as liquibase keeps track of DDL changes.
-   * @param jdbi the jdbi instance of the database we want to use.
    * @throws liquibase.exception.DatabaseException
    */
-  public static void upgradeByLiquibase(Jdbi jdbi) throws DatabaseException, LiquibaseException {
+  public void upgradeByLiquibase() throws DatabaseException, LiquibaseException {
     jdbi.withHandle(h -> {
       LOG.info(PREFIX_AUTH+"Upgrading auth tables through liquibase");
       h.begin();
@@ -136,54 +140,49 @@ public final class AuthenticationResources {
 
   /**
    * Adds the registration endpoint to '/register'.
-   * @param jdbi the jdbi instance of the database containing the user and authentication tables.
    */
-  public static void addRegisterResource(Jdbi jdbi) {
-    addRegisterResource(jdbi, empty(), empty());
+  public void addRegisterResource() {
+    addRegisterResource(empty(), empty());
   }
 
   /**
    * Adds the registration endpoint to '/register'.
-   * @param jdbi the jdbi instance of the database containing the user and authentication tables.
    * @param resourcePath a different path where to register the endpoint
    */
-  public static void addRegisterResource(Jdbi jdbi, String resourcePath) {
-    addRegisterResource(jdbi, of(resourcePath), empty());
+  public void addRegisterResource(String resourcePath) {
+    addRegisterResource(of(resourcePath), empty());
   }
 
   /**
    * Adds the registration endpoint to '/register'.
-   * @param jdbi the jdbi instance of the database containing the user and authentication tables.
    * @param verificationCodeConsumer the functional consumer for sending the verification code to the user.
    */
-  public static void addRegisterResource(Jdbi jdbi, Consumer<String> verificationCodeConsumer) {
-    addRegisterResource(jdbi, empty(), of(verificationCodeConsumer));
+  public void addRegisterResource(Consumer<String> verificationCodeConsumer) {
+    addRegisterResource(empty(), of(verificationCodeConsumer));
   }
 
   /**
    * Adds the registration endpoint to '/register'.
-   * @param jdbi the jdbi instance of the database containing the user and authentication tables.
    * @param resourcePath a different path where to register the endpoint
    * @param verificationCodeConsumer the functional consumer for sending the verification code to the user.
    */
-  public static void addRegisterResource(Jdbi jdbi, String resourcePath, Consumer<String> verificationCodeConsumer) {
-    addRegisterResource(jdbi, of(resourcePath), of(verificationCodeConsumer));
+  public void addRegisterResource(String resourcePath, Consumer<String> verificationCodeConsumer) {
+    addRegisterResource(of(resourcePath), of(verificationCodeConsumer));
   }
 
   /**
    * Adds the registration endpoint to '/register'.
    *
-   * @param jdbi the jdbi instance of the database containing the user and authentication tables.
    * @param resourcePath the path for the registration endpoint or empty for default (/register)
    * @param verificationCodeConsumer
    *        the consumer that will send the verification code to the user, or empty for always accept the user code upon
    *        registration (WARNING: it is recommended to implement a verification method and not leave it on auto accept,
    *        for security reasons)
    */
-  public static void addRegisterResource(Jdbi jdbi, Optional<String> resourcePath, Optional<Consumer<String>> verificationCodeConsumer) {
+  public void addRegisterResource(Optional<String> resourcePath, Optional<Consumer<String>> verificationCodeConsumer) {
     String resPath = resourcePath.orElse("/register");
     LOG.info(PREFIX_AUTH+"Adding resource {}", resPath);
-    Spark.post(resPath, (req, resp) -> register(jdbi, verificationCodeConsumer, req, resp));
+    javalin.post(resPath, c -> register(jdbi, verificationCodeConsumer, c));
   }
 
   /**
@@ -200,9 +199,8 @@ public final class AuthenticationResources {
   }
 
   // Handle this as default package level so we can mock/use it later in unit tests
-  static String register(Jdbi jdbi, Optional<Consumer<String>> verificationCodeConsumer, Request req, Response resp) {
-    JsonTransformer tr = new JsonTransformer();
-    ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
+  static String register(Jdbi jdbi, Optional<Consumer<String>> verificationCodeConsumer, Context ctx) {
+    ImmutableLoginData loginData = JavalinJson.fromJson(ctx.body(), ImmutableLoginData.class);
 
     // Create the hash+salt and remove password from memory immediately.
     char[] hash = hashAndClean(loginData.password().toCharArray());
@@ -235,23 +233,22 @@ public final class AuthenticationResources {
   // Login resource
   //
 
-  public static void addLoginResource(Jdbi jdbi) {
-    addLoginResource(jdbi, empty());
+  public void addLoginResource() {
+    addLoginResource(empty());
   }
 
-  public static void addLoginResource(Jdbi jdbi, String resourcePath) {
-    addLoginResource(jdbi, of(resourcePath));
+  public void addLoginResource(String resourcePath) {
+    addLoginResource(of(resourcePath));
   }
 
-  public static void addLoginResource(Jdbi jdbi, Optional<String> resourcePath) {
+  public void addLoginResource(Optional<String> resourcePath) {
     String resPath = resourcePath.orElse("/login");
     LOG.info(PREFIX_AUTH+"Adding resource {}, UUID token version", resPath);
-    Spark.post(resPath, (req, resp) -> login(jdbi, req, resp));
+    javalin.post(resPath, c -> login(jdbi, c));
   }
 
-  static String login(Jdbi jdbi, Request req, Response resp) {
-    JsonTransformer tr = new JsonTransformer();
-    ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
+  static void login(Jdbi jdbi, Context ctx) {
+    ImmutableLoginData loginData = JavalinJson.fromJson(ctx.body(), ImmutableLoginData.class);
 
     Optional<String> optHash = jdbi.withHandle(h -> {
       // Finds the hash code of the user but only if enabled. Returned as optional
@@ -270,8 +267,8 @@ public final class AuthenticationResources {
 
     // Unauthorized, login didn't succeed.
     if (!loggedIn) {
-      resp.status(401);
-      return "";
+      ctx.status(401);
+      return;
     }
 
     // Create a new token with expiration default.
@@ -294,7 +291,7 @@ public final class AuthenticationResources {
         .expiresAt(expiresAt.toString())
         .build();
 
-    return tr.render(tokenResult);
+    ctx.json(tokenResult);
   }
 
   //
@@ -304,32 +301,29 @@ public final class AuthenticationResources {
   /**
    * Sets up a login endpoint that handles JTW type of tokens being returned.
    * By default it maps to "/login"
-   * @param jdbi the JDDI instance, where the user table is.
    * @param secret the secret used to sign JWT. Keep it private and only on the server side.
    */
-  public static void addJWTLoginResource(Jdbi jdbi, String secret) {
-    addJWTLoginResource(jdbi, secret, empty());
+  public void addJWTLoginResource(String secret) {
+    addJWTLoginResource(secret, empty());
   }
 
   /**
    * Sets up a login endpoint that handles JTW type of tokens being returned.
-   * @param jdbi the JDDI instance, where the user table is.
    * @param secret the secret used to sign JWT. Keep it private and only on the server side.
    * @param resourcePath the path of the resource to bind.
    */
-  public static void addJWTLoginResource(Jdbi jdbi, String secret, String resourcePath) {
-    addJWTLoginResource(jdbi, secret, of(resourcePath));
+  public void addJWTLoginResource(String secret, String resourcePath) {
+    addJWTLoginResource(secret, of(resourcePath));
   }
 
-  public static void addJWTLoginResource(Jdbi jdbi, String secret, Optional<String> resourcePath) {
+  public void addJWTLoginResource(String secret, Optional<String> resourcePath) {
     String resPath = resourcePath.orElse("/login");
     LOG.info(PREFIX_AUTH+"Adding resource {}, JWT version", resPath);
-    Spark.post(resPath, (req, resp) -> loginJWT(jdbi, secret, req, resp));
+    javalin.post(resPath, c -> loginJWT(jdbi, secret, c));
   }
 
-  static String loginJWT(Jdbi jdbi, String secret, Request req, Response resp) {
-    JsonTransformer tr = new JsonTransformer();
-    ImmutableLoginData loginData = tr.parse(req.body(), ImmutableLoginData.class);
+  static void loginJWT(Jdbi jdbi, String secret, Context ctx) {
+    ImmutableLoginData loginData = JavalinJson.fromJson(ctx.body(), ImmutableLoginData.class);
 
     Optional<String> optHash = jdbi.withHandle(h -> {
       // Finds the hash code of the user but only if enabled. Returned as optional
@@ -348,8 +342,8 @@ public final class AuthenticationResources {
 
     // Unauthorized, login didn't succeed.
     if (!loggedIn) {
-      resp.status(401);
-      return "";
+      ctx.status(401);
+      return;
     }
 
     Instant expiresAt = Instant.now().plusMillis(DEFAULT_TOKEN_EXPIRE_MS);
@@ -369,37 +363,35 @@ public final class AuthenticationResources {
         .expiresAt(expiresAt.toString())
         .build();
 
-    return tr.render(tokenResult);
+    ctx.json(tokenResult);
   }
 
   //
   // Check resource
   //
 
-  public static void addCheckTokenResource(Jdbi jdbi) {
-    addCheckTokenResource(jdbi, empty());
+  public void addCheckTokenResource() {
+    addCheckTokenResource(empty());
   }
 
-  public static void addCheckTokenResource(Jdbi jdbi, String resourcePath) {
-    addCheckTokenResource(jdbi, of(resourcePath));
+  public void addCheckTokenResource(String resourcePath) {
+    addCheckTokenResource(of(resourcePath));
   }
 
-  public static void addCheckTokenResource(Jdbi jdbi, Optional<String> resourcePath) {
+  public void addCheckTokenResource(Optional<String> resourcePath) {
     String resPath = resourcePath.orElse("/checktoken");
     LOG.info(PREFIX_AUTH+"Adding resource {}", resPath);
-    Spark.post(resPath, (req, resp) -> checkToken(jdbi, req, resp));
+    javalin.post(resPath, c -> checkToken(jdbi, c));
   }
 
-  static String checkToken(Jdbi jdbi, Request req, Response resp) {
-    JsonTransformer tr = new JsonTransformer();
-    String authHeader = req.headers("Authorization");
+  static void checkToken(Jdbi jdbi, Context ctx) {
+    String authHeader = ctx.header("Authorization");
     authHeader = authHeader == null ? "" : authHeader.trim();
 
     // Can't accept other token types, at least not in this implementaion
     // devs can implement their own if they want
     if (!authHeader.toLowerCase().startsWith("Bearer".toLowerCase())) {
-      resp.status(401);
-      return tr.render(ImmutableApiMessage.builder().message("Only bearer tokens are supported").build());
+      throw new HttpResponseException(401, "Only bearer tokens are supported", emptyMap());
     }
 
     String token = authHeader.substring("Bearer".length()).trim();
@@ -415,11 +407,10 @@ public final class AuthenticationResources {
     });
 
     if (email.isPresent()) {
-      resp.status(200);
-      return tr.render(email.get());
+      ctx.status(200);
+      ctx.json(email.get());
     } else {
-      resp.status(401);
-      return "";
+      throw new HttpResponseException(401, "", emptyMap());
     }
   }
 

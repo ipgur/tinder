@@ -2,7 +2,8 @@ package api.resources;
 
 import api.model.ImmutableBean;
 import api.services.ServiceExample;
-import com.timgroup.statsd.StatsDClient;
+import io.javalin.Context;
+import io.javalin.Javalin;
 import io.swagger.annotations.ApiOperation;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -14,8 +15,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import spark.Request;
-import spark.Response;
 import tinder.core.Resource;
 import tinder.core.ResourceEvents;
 import tinder.core.modules.metrics.StatsDHelper;
@@ -29,7 +28,7 @@ public class Example implements ResourceEvents {
 
   @Inject
   public Example() {
-    ResourceExample.bind(this);
+    ResourceExample.bind(Javalin.create(), this);
   }
 
   @POST
@@ -76,7 +75,7 @@ public class Example implements ResourceEvents {
 
   @PUT
   @Path("/raw")
-  public void raw(Request req, Response resp) {
+  public void raw(Context ctx) {
 
   }
 

@@ -15,15 +15,14 @@
  */
 package tinder.core.auth;
 
+import io.javalin.Context;
+import io.javalin.HttpResponseException;
 import static java.util.Optional.empty;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import spark.HaltException;
-import spark.Request;
-import spark.Response;
 
 /**
  *
@@ -34,25 +33,24 @@ public class AuthenticationFilterAPITest {
   @Test
   public void testAPI() {
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
+    Context ctx = mock(Context.class);
 
-    when(req.headers(any())).thenReturn("Bearer XXX");
-    when(req.uri()).thenReturn("/someendpoint");
+    when(ctx.header(any())).thenReturn("Bearer XXX");
+    when(ctx.path()).thenReturn("/someendpoint");
 
     AuthenticationService service = mock(AuthenticationService.class);
 
     when(service.checkUrl(any())).thenReturn("email");
-    AuthenticationFilter.authenticateAPIFilter(service, empty(), req, resp);
+    AuthenticationFilter.authenticateAPIFilter(service, empty(), ctx);
 
     when(service.checkUrl(any())).thenReturn(null);
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateAPIFilter(service, empty(), req, resp);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateAPIFilter(service, empty(), ctx);
     });
 
     // Tes skippping of login endpoint
-    when(req.uri()).thenReturn("/login");
-    AuthenticationFilter.authenticateAPIFilter(service, empty(), req, resp);
+    when(ctx.path()).thenReturn("/login");
+    AuthenticationFilter.authenticateAPIFilter(service, empty(), ctx);
   }
 
 }

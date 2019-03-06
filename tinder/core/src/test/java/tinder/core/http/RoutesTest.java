@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tinder.core.spark;
+package tinder.core.http;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.timgroup.statsd.StatsDClient;
+import io.javalin.Javalin;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import spark.Spark;
 import tinder.core.auth.AuthenticationFilter;
 import tinder.core.auth.AuthenticationResources;
 import tinder.core.modules.ImmutableTinderConfiguration;
@@ -38,12 +38,9 @@ public class RoutesTest {
   @Test
   public void testRoutes() {
 
-    // Keep all spark tests in this test, so that it won't clash with itself with the inner signleton.
+    // Keep all http tests in this test, so that it won't clash with itself with the inner signleton.
 
     TinderConfiguration configuration = ImmutableTinderConfiguration.builder()
-        .httpUseSecure(true)
-        .httpKeystoreFile("testdocs/selfsigned.jks")
-        .httpKeystorePassword("changeit")
         .build();
     TinderModule module = new TinderModule(configuration);
     module.healthCheckRegistry().register("test", new HealthCheck(){
@@ -59,32 +56,35 @@ public class RoutesTest {
 
     Jdbi jdbi = module.jdbi(configuration);
 
-    // Test with the spark endpoints now
+    // Test with the http endpoints now
 
-    AuthenticationFilter.addAPIBasedFilter("/auth1/*", "http://localhost:4567");
-    AuthenticationFilter.addAPIBasedFilter("/auth1-a/*", "http://localhost:4567", new HashSet<>(Arrays.asList("/myendpoint")));
+    AuthenticationFilter filter = new AuthenticationFilter(module.javalin(), jdbi);
 
-    AuthenticationFilter.addJWTBasedFilter("/auth2/*", "seekrit");
-    AuthenticationFilter.addJWTBasedFilter("/auth2-a/*", "seekrit", new HashSet<>(Arrays.asList("/myendpoint")));
+    filter.addAPIBasedFilter("/auth1/*", "http://localhost:4567");
+    filter.addAPIBasedFilter("/auth1-a/*", "http://localhost:4567", new HashSet<>(Arrays.asList("/myendpoint")));
 
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth2/*");
-    AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth3/*", new HashSet<>(Arrays.asList("/myendpoint")));
+    filter.addJWTBasedFilter("/auth2/*", "seekrit");
+    filter.addJWTBasedFilter("/auth2-a/*", "seekrit", new HashSet<>(Arrays.asList("/myendpoint")));
 
-    AuthenticationResources.addRegisterResource(jdbi);
-    AuthenticationResources.addRegisterResource(jdbi, System.out::println);
-    AuthenticationResources.addRegisterResource(jdbi, "/myRegistration");
-    AuthenticationResources.addRegisterResource(jdbi, "/myRegistration2", System.out::println);
+    filter.addDatabaseBasedFilter("/auth2/*");
+    filter.addDatabaseBasedFilter("/auth3/*", new HashSet<>(Arrays.asList("/myendpoint")));
 
-    AuthenticationResources.addLoginResource(jdbi);
-    AuthenticationResources.addLoginResource(jdbi, "/myLogin");
+    AuthenticationResources ar = new AuthenticationResources(module.javalin(), jdbi);
 
-    AuthenticationResources.addJWTLoginResource(jdbi, "seekrit");
-    AuthenticationResources.addJWTLoginResource(jdbi, "seekrit", "/myJWTLogin");
+    ar.addRegisterResource();
+    ar.addRegisterResource("/my-registration");
+    ar.addRegisterResource("/my-registration2", System.out::println);
 
-    AuthenticationResources.addCheckTokenResource(jdbi);
-    AuthenticationResources.addCheckTokenResource(jdbi, "/myChecktoken");
+    ar.addLoginResource();
+    ar.addLoginResource("/my-login");
 
-    // Make sure to not leave spark open here...
-    Spark.stop();
+    ar.addCheckTokenResource();
+    ar.addCheckTokenResource("/my-checktoken");
+
+    AuthenticationResources ar2 = new AuthenticationResources(Javalin.create(), jdbi);
+    ar2.addRegisterResource(System.out::println);
+    ar2.addJWTLoginResource("seekrit");
+    ar2.addJWTLoginResource("seekrit", "/my-jwt-login");
+
   }
 }

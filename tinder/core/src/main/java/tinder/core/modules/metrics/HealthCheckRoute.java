@@ -17,19 +17,16 @@ package tinder.core.modules.metrics;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import io.javalin.Context;
+import io.javalin.Handler;
 import java.util.SortedMap;
-import spark.Request;
-import spark.Response;
-import spark.Route;
-import tinder.core.JsonTransformer;
 
 /**
  *
  * @author Raffaele Ragni
  */
-public class HealthCheckRoute implements Route {
+public class HealthCheckRoute implements Handler {
 
-  final JsonTransformer tf = new JsonTransformer();
   final HealthCheckRegistry healthCheckRegistry;
 
   public HealthCheckRoute(HealthCheckRegistry healthCheckRegistry) {
@@ -37,10 +34,10 @@ public class HealthCheckRoute implements Route {
   }
 
   @Override
-  public String handle(Request request, Response response) throws Exception {
+  public void handle(Context ctx) throws Exception {
 
-    response.header("Content-Type", "application/json");
-    response.header("Cache-Control", "must-revalidate,no-cache,no-store");
+    ctx.header("Content-Type", "application/json");
+    ctx.header("Cache-Control", "must-revalidate,no-cache,no-store");
 
     SortedMap<String, HealthCheck.Result> results = healthCheckRegistry.runHealthChecks();
 
@@ -52,12 +49,12 @@ public class HealthCheckRoute implements Route {
         .isPresent();
 
     if (anyFailed) {
-      response.status(500);
+      ctx.status(500);
     } else {
-      response.status(200);
+      ctx.status(200);
     }
 
-    return tf.render(results);
+    ctx.json(results);
   }
 
 }

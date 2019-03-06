@@ -15,6 +15,8 @@
  */
 package tinder.core.auth;
 
+import io.javalin.Context;
+import io.javalin.Javalin;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import liquibase.exception.DatabaseException;
@@ -24,8 +26,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import spark.Request;
-import spark.Response;
 import tinder.core.JDBILoader;
 
 /**
@@ -37,18 +37,18 @@ public class AuthenticationResourceRegisterTest {
   @Test
   public void testRegister() throws DatabaseException, LiquibaseException {
     Jdbi jdbi = JDBILoader.load();
-    AuthenticationResources.upgradeByLiquibase(jdbi);
+    AuthenticationResources ar = new AuthenticationResources(mock(Javalin.class), jdbi);
+    ar.upgradeByLiquibase();
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
+    Context ctx = mock(Context.class);
 
     // This user is automatically confirmed because we are passing an empty() callback of the verification code consumer
-    when(req.body()).thenReturn("{\"email\": \"my.email@mail.go\", \"password\": \"12345678\"}");
-    AuthenticationResources.register(jdbi, empty(), req, resp);
+    when(ctx.body()).thenReturn("{\"email\": \"my.email@mail.go\", \"password\": \"12345678\"}");
+    AuthenticationResources.register(jdbi, empty(), ctx);
 
     // This user won't be enabled because we just print the confirmation code
-    when(req.body()).thenReturn("{\"email\": \"my.emai2@mail.go\", \"password\": \"12345678\"}");
-    AuthenticationResources.register(jdbi, of(System.out::println), req, resp);
+    when(ctx.body()).thenReturn("{\"email\": \"my.emai2@mail.go\", \"password\": \"12345678\"}");
+    AuthenticationResources.register(jdbi, of(System.out::println), ctx);
 
     jdbi.withHandle(h -> {
       boolean enabled1 = h.createQuery("select enabled from tinder_users where email = :email")

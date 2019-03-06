@@ -32,9 +32,6 @@ public class TinderConfigurationTest {
 
     Assertions.assertEquals(true, configuration.useHttp());
     Assertions.assertEquals(8080, configuration.httpPort());
-    Assertions.assertEquals(-1, configuration.httpMinThreads());
-    Assertions.assertEquals(-1, configuration.httpMaxThreads());
-    Assertions.assertEquals(-1, configuration.httpIdleTimeoutMillis());
     Assertions.assertEquals("jdbi", configuration.jdbiInstanceName());
   }
 

@@ -15,6 +15,9 @@
  */
 package tinder.core.auth;
 
+import io.javalin.Context;
+import io.javalin.HttpResponseException;
+import io.javalin.Javalin;
 import static java.util.Optional.empty;
 import java.util.UUID;
 import liquibase.exception.LiquibaseException;
@@ -23,9 +26,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import spark.HaltException;
-import spark.Request;
-import spark.Response;
 import tinder.core.JDBILoader;
 import static tinder.core.auth.AuthenticationResourceCheckTokenTest.addToken;
 
@@ -38,44 +38,44 @@ public class AuthenticationFilterDBTest {
   @Test
   public void testDB() throws LiquibaseException {
     Jdbi jdbi = JDBILoader.load();
-    AuthenticationResources.upgradeByLiquibase(jdbi);
+    AuthenticationResources ar = new AuthenticationResources(mock(Javalin.class), jdbi);
+    ar.upgradeByLiquibase();
 
-    Request req = mock(Request.class);
-    Response resp = mock(Response.class);
+    Context ctx = mock(Context.class);
 
-    when(req.uri()).thenReturn("/someendpoint");
+    when(ctx.path()).thenReturn("/someendpoint");
 
     // Test a valid token (a 1h token)
     String validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
-    when(req.headers("Authorization")).thenReturn("Bearer " + validToken);
-    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    when(ctx.header("Authorization")).thenReturn("Bearer " + validToken);
+    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
 
     // Test an invalid token, save oen and pick another completely random one
     validToken = UUID.randomUUID().toString();
     addToken(jdbi, validToken, 3600_000L);
-    when(req.headers("Authorization")).thenReturn("Bearer " + UUID.randomUUID().toString());
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    when(ctx.header("Authorization")).thenReturn("Bearer " + UUID.randomUUID().toString());
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
     });
 
     // Test an invalid header
-    when(req.headers("Authorization")).thenReturn("aaaa not a token");
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    when(ctx.header("Authorization")).thenReturn("aaaa not a token");
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
     });
 
     // Test an expired token (1h ago)
     String expiredToken = UUID.randomUUID().toString();
     addToken(jdbi, expiredToken, -3600_000L);
-    when(req.headers("Authorization")).thenReturn("Bearer " + expiredToken);
-    Assertions.assertThrows(HaltException.class, () -> {
-      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    when(ctx.header("Authorization")).thenReturn("Bearer " + expiredToken);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
     });
 
     // Tes skippping of login endpoint
-    when(req.uri()).thenReturn("/login");
-    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), req, resp);
+    when(ctx.path()).thenReturn("/login");
+    AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
   }
 
 }

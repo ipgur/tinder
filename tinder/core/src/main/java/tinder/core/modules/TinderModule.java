@@ -20,14 +20,14 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import io.javalin.Context;
+import io.javalin.Javalin;
 import static java.util.Optional.of;
 import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import spark.Response;
-import spark.Spark;
 import tinder.core.JDBILoader;
 import tinder.core.modules.metrics.HealthCheckRoute;
 
@@ -41,7 +41,7 @@ public class TinderModule {
 
   public static final String HEADER_TINDER_REQUEST_UUID = "X-Tinder-RequestUUID";
 
-  private static final String SPARK_PREFIX = "Sparjkava :: ";
+  private static final String JAVALIN_PREFIX = "Javalin :: ";
   private static final String METRICS_PREFIX = "Metrics :: ";
   private static final String JDBI_PREFIX = "Jdbi :: ";
 
@@ -53,6 +53,8 @@ public class TinderModule {
   final HealthCheckRegistry healthCheckRegistry;
 
   final StatsDClient statsDClient;
+
+  final Javalin javalin;
 
   public TinderModule(TinderConfiguration configuration) {
     this.configuration = configuration;
@@ -70,27 +72,21 @@ public class TinderModule {
     statsDClient = new NonBlockingStatsDClient(
         configuration.statsDPrefix(), configuration.statsDHost(), configuration.statsDPort());
 
-    // Start up spark if enabled.
+    javalin = Javalin.create().disableStartupBanner();
+
+    // Start up http if enabled.
     if (configuration.useHttp()) {
-      LOG.info(SPARK_PREFIX+"Starting Sparkjava...");
-      if (configuration.httpUseSecure()) {
-        LOG.info(SPARK_PREFIX+"Enabling https for keystore {}", configuration.httpKeystoreFile());
-        Spark.secure(configuration.httpKeystoreFile(), configuration.httpKeystorePassword(), null, null);
-      }
-      LOG.info(SPARK_PREFIX+"Using port {}", configuration.httpPort());
-      Spark.port(configuration.httpPort());
-      Spark.threadPool(
-          configuration.httpMaxThreads(),
-          configuration.httpMinThreads(),
-          configuration.httpIdleTimeoutMillis());
-      configuration.httpStaticFilesLocation().ifPresent(Spark.staticFiles::location);
+      LOG.info(JAVALIN_PREFIX+"Starting Javalin...");
+      LOG.info(JAVALIN_PREFIX+"Using port {}", configuration.httpPort());
+      javalin.port(configuration.httpPort());
+      configuration.httpStaticFilesLocation().ifPresent(javalin::enableStaticFiles);
       // We always add the support for identifiable requests via the custom header
-      Spark.before((req, resp) -> { requestUUIDFilterBefore(); });
-      Spark.after((req, resp) -> { requestUUIDFilterAfter(resp); });
+      javalin.before(c -> { requestUUIDFilterBefore(); });
+      javalin.after(c -> { requestUUIDFilterAfter(c); });
       // Map the healthchecks
       if (configuration.useHealtCheckEndpoint()) {
-        LOG.info(SPARK_PREFIX+"Adding /healthcheck");
-        Spark.get("/healthcheck", new HealthCheckRoute(healthCheckRegistry));
+        LOG.info(JAVALIN_PREFIX+"Adding /healthcheck");
+        javalin.get("/healthcheck", new HealthCheckRoute(healthCheckRegistry));
       }
     }
 
@@ -103,6 +99,10 @@ public class TinderModule {
       // Make sure to terminate it at JVM end
       Runtime.getRuntime().addShutdownHook(new Thread(() -> reporter.stop()));
     }
+  }
+
+  public Javalin javalin() {
+    return javalin;
   }
 
   public StatsDClient statsDClient() {
@@ -137,16 +137,16 @@ public class TinderModule {
   static void requestUUIDFilterBefore() {
     String uuid = UUID.randomUUID().toString();
     MDC.put(MDC_REQUEST_UUID, uuid);
-    LOG.info(SPARK_PREFIX+"Start of request UUID filter for request: {}", uuid);
+    LOG.info(JAVALIN_PREFIX+"Start of request UUID filter for request: {}", uuid);
   }
 
   /**
    * Adds the request UUID header in responses.
    */
-  static void requestUUIDFilterAfter(Response resp) {
+  static void requestUUIDFilterAfter(Context ctx) {
     String uuid = MDC.get(MDC_REQUEST_UUID);
-    resp.header(HEADER_TINDER_REQUEST_UUID, uuid);
-    LOG.info(SPARK_PREFIX+"End of request UUID filter for request: {}", uuid);
+    ctx.header(HEADER_TINDER_REQUEST_UUID, uuid);
+    LOG.info(JAVALIN_PREFIX+"End of request UUID filter for request: {}", uuid);
     MDC.remove(MDC_REQUEST_UUID);
   }
 
