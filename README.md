@@ -1,7 +1,11 @@
 
 # Tinder API
 
-Build status: [![CircleCI](https://circleci.com/gh/raffaeleragni/tinder.svg?style=svg)](https://circleci.com/gh/raffaeleragni/tinder)
+Name     | Status |
+-------- | ------ |
+Build    | [![CircleCI](https://circleci.com/gh/raffaeleragni/tinder.svg?style=svg)](https://circleci.com/gh/raffaeleragni/tinder) |
+Coverage | [![codecov](https://codecov.io/gh/raffaeleragni/tinder/branch/master/graph/badge.svg)](https://codecov.io/gh/raffaeleragni/tinder) |
+
 
 ## Tinder is an API stack.
 
@@ -48,7 +52,7 @@ On the APT processors:
    * @Resource to mark a resource, this annotation comes from tinder.
    * @Path
    * @GET, @POST, @PUT, @PATCH, @DELETE
-   * @PathParam, @QueryParam, @@headerParam in parameters
+   * @PathParam, @QueryParam, @HeaderParam in parameters
    * parameters in path specified by "{}" (conversion is made on source generation)
 
 On the configuration:
@@ -61,6 +65,8 @@ On the configuration:
 ## Some examples
 
 A simple api resource.
+Uses JAX-RS annotations.
+Not all annotations are supported, see the list above.
 
 ```java
 @Resource
@@ -73,9 +79,15 @@ public class Example {
     ResourceExample.bind(this);
   }
   @POST
-  @Path("/echo/")
-  public String echo(String input) {
-    return input;
+  @Path("/echo/{v}")
+  public String echo(String input, @PathParam("v") Integer v) {
+    return input + v;
+  }
+  // You can also use Spark Request/Response directly, they will be recognized and passed as is.
+  @PUT
+  @Path("/raw")
+  public String raw(Request req, Response resp) {
+    return "";
   }
 }
 ```
@@ -106,3 +118,205 @@ Setting up authentication filters, endpoints and a healtcheck.
 ```
 
 
+## Authentication features
+
+Tinder API implements some authentication for you. Those are simple registration, login and filtering endpoints.
+The recommended implementation to use is JWT, as it does not require databse lookups for token validation.
+At the current moment JTW is best used in the monolythic setup, that is, you have one api with register & login also in the same API.
+You could setup JWT via satellite, but then it needs to be setup with the same secret across all APIs using it.
+
+JWT secret can be changed in case of breach with little consequance: all it means upon change / restart of the APIs is just that tokens need to be reacquired.
+
+One alternative is to use UUID generated tokens. Those are done via SecureRandom (java implementation) and they are random enough for
+security purposes. This means that your filter (API kind of filter) will query the 'central' auth api where the /checktoken is.
+Because of the nature of UUID, the /checktoken must return the email (user PK), which in the JWT case is embedded in the JWT.
+
+JWT setup:
+
+```java
+// Upgrade/create the database tables required by authentication.
+// Uses liquibase, only incremental changes.
+AuthenticationResources.upgradeByLiquibase(jdbi);
+
+// Add a filter on /auth/* (best not use /* for exclusion reasons)
+// This is a JWT filter, all it needs is the secret to verify the signature.
+AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
+
+// Add a /register resource POST that needs a {"email": "...", "password": "..."}
+// you can pass a function that will receive the generated confirmation code and send
+// it to the user via mail / use the consumer signature
+AuthenticationResources.addRegisterResource(jdbi, confirmationCode -> ... send email to user...);
+
+// Or use no consumer function, but then that means NO confirmation flow is enabled!
+AuthenticationResources.addRegisterResource(jdbi);
+
+// Setup a /login endpoint, same data as register, that returns a JWT token.
+// JWT tokens are 30 minutes valid by default
+AuthenticationResources.addJWTLoginResource(jdbi, secret);
+
+...
+
+// Later you can make an endpoint that accepts the confirmationCode
+@GET
+@Path("/user/{user}/confirm/{code}")
+public String confirm(@PathParam("code") String user, @PathParam("code") String code) {}
+  // This is the final confirmation, and will enable the user for logins.
+  AuthenticationFilter.confirm(jdbi, email, code);
+  return "";
+}
+```
+
+Alternative UUID token based:
+
+```java
+// Filter checks in DB directly for token
+AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth/*");
+// Login returns UUID token directly
+AuthenticationResources.addLoginResource(jdbi);
+```
+
+Alternative using remote API
+```java
+// On the remote api
+AuthenticationResources.addCheckTokenResource(jdbi);
+// On your api
+AuthenticationFilter.addAPIBasedFilter("/auth/*", "https://your.login.api/checktoken");
+```
+
+In case of filters, the user is stored in `req.attribute(AuthenticationResources.REQ_EMAIL)`.
+
+Of course you can implement your own authentication too. The usage of these endpoint initalizers is totally optional, and if not used they are totally inactive.
+
+
+## Metrics and healthcheck features
+
+Three main things are available here:
+
+ * classic 'healthchecks'
+ * classic 'metrics'
+ * a statsd client (DD implementation)
+
+We will skip the classic metrics in this example and start with the healthchecks.
+
+### Healthchecks
+
+To define a healthcheck, just do it as usual when using the codahale metrics.
+Example:
+
+```java
+public class APIHealthCheck extends HealthCheck {
+
+  final Jdbi jdbi;
+
+  public APIHealthCheck(Jdbi jdbi) {
+    this.jdbi = jdbi;
+  }
+
+  @Override
+  protected Result check() throws Exception {
+    return jdbi.withHandle(h -> {
+      try {
+        Integer result = h.select("select 1").mapTo(Integer.class).findOnly();
+        if (result == 1) {
+          return Result.healthy();
+        } else {
+          return Result.unhealthy("result was not 1");
+        }
+      } catch (RuntimeException e) {
+        return Result.unhealthy(e);
+      }
+    });
+  }
+
+}
+```
+
+Then just add it to the provided (via dagger2) module isntance / injected component.
+
+```java
+@Inject HealthCheckRegistry healthCheckRegistry;
+
+...
+
+healthCheckRegistry.register("jdbi", new APIHealthCheck(jdbi));
+```
+
+How to setup the instance / component? That is shown in the AppModule:
+
+```java
+@Module
+public class AppModule extends TinderModule {
+
+  public AppModule() {
+    super(ImmutableTinderConfiguration.builder().build());
+  }
+
+  @Provides
+  @Singleton
+  public HealthCheckRegistry getHealthCheckRegistry() {
+    return healthCheckRegistry();
+  }
+}
+```
+
+And AppComponent / App
+
+```java
+@Singleton
+@Component(modules = {AppModule.class})
+public interface AppComponent {
+  App app();
+}
+
+```
+
+```java
+public class App {
+
+  @Inject HealthCheckRegistry healthCheckRegistry;
+
+  @Inject
+  public App() {
+  }
+
+  public static void main(String[] args) {
+    DaggerAppComponent.create().app();
+  }
+
+  @Inject public void postConstruct() {
+    healthCheckRegistry.register("jdbi", new APIHealthCheck(jdbi));
+  }
+}
+```
+
+### Metrics via statsd
+
+Just as above you can obtain the component for metrics / statsd in the same manner. In the AppModule:
+
+```java
+  @Provides
+  @Singleton
+  public StatsDClient getStatsDClient() {
+    return statsDClient();
+  }
+
+  @Provides
+  @Singleton
+  public StatsDHelper getStatsDHelper() {
+    return new StatsDHelper(statsDClient());
+  }
+```
+
+Then using it:
+
+```java
+  @Inject StatsDHelper sdh;
+
+  @GET
+  @Path("/test")
+  public String testdb() {
+    return sdh.timedAround("request_endpoint_test", () -> {
+      // do your thing?
+    });
+  }
+```
