@@ -16,7 +16,8 @@
 package tinder.core.modules;
 
 import java.util.Optional;
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
+import org.eclipse.jetty.server.Server;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
 
@@ -28,30 +29,54 @@ import org.immutables.value.Value.Immutable;
 public interface TinderConfiguration {
 
   /**
-   * Whether to bootstrap http port.
+   * Whether to bootstrap the http server port.
    * Change this only if you want to not open any http.
    * If you are building an offline component, put it to false
    * @return true if we want to use http, default is true.
    */
-  @Default default boolean useHttp() { return true; }
+  @Default default boolean useServer() { return true; }
+
+  /**
+   * Whether to only start the SSL port.
+   * If false, it will also start unencrypted http.
+   * @return true if we want to use ONLY https secured/SSL
+   */
+  @Default default boolean httpSSLOnly() { return true; }
 
   /**
    * This is the port to listen for.
-   * @return http(s) port to listen. Defaults to 8443 since secure() is defaulted to true.
+   * @return http port to listen. Defaults to 8080
    */
   @Default default int httpPort() { return 8080; }
 
   /**
-   * Where to find the Keystore file.
-   * @return the Keystore file path
+   * This is the port to listen for.
+   * Keep in mind that http2 will work ONLY over SSL.
+   * @return https port to listen. Defaults to 8443
    */
-  @Nullable String httpKeystoreFile();
+  @Default default int httpSSLPort() { return 8443; }
 
   /**
-   * The password to the keystore.
-   * @return the password to the keystore
+   * TPath to the keystore.
+   * Default empty()
+   * Keep in mind that http2 will work ONLY over SSL.
+   * @return keystore file path
    */
-  @Nullable String httpKeystorePassword();
+  Optional<String> httpSSLKeystorePath();
+
+  /**
+   * Password for the keystore.
+   * Default empty()
+   * Keep in mind that http2 will work ONLY over SSL.
+   * @return keystore password
+   */
+  Optional<String> httpSSLKeystorePassword();
+
+  /**
+   * A server customizer for jetty.
+   * @return the customizer function a consumer of Server
+   */
+  @Default default Consumer<Server> httpServerConfigurator() { return s -> {}; }
 
   /**
    * Publish on the root http path, the static file path in this string.

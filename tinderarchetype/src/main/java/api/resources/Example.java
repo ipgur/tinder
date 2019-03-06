@@ -27,8 +27,8 @@ public class Example implements ResourceEvents {
   @Inject StatsDHelper sdh;
 
   @Inject
-  public Example() {
-    ResourceExample.bind(Javalin.create(), this);
+  public Example(Javalin javalin) {
+    ResourceExample.bind(javalin, this);
   }
 
   @POST

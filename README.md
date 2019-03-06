@@ -28,7 +28,8 @@ It relies on source code generation, and inert runtimes. What does that mean? Ti
 * do a `./mvnw package` from the `tinderarchetype` folder
 * run the sample with `java -jar target/app.jar` from the `tinderarchetype` folder.
 * alternatively you can start it up via docker `docker run -it --rm -p 8080:8080 archetype/tinder-archetype:1.1-SNAPSHOT`
-* open browser on http://localhost:8080/
+* open browser on http://localhost:8080/ (if httpSSLOnly(false)) or https://localhost:8443/
+* Eventually you should provide your own keystore.jks for SSL
 
 The archetype provided takes care already of building the swagger.yml and the swagger-ui, and also for building a docker image out of it (all based on maven plugins).
 
@@ -40,7 +41,19 @@ Simply checkout the `tinderarchetype` and use it as a template for starting up. 
 
 From there on you can just go and play with it.
 
-Performance tests done using wrk and a medium class laptop resulted in handling 37000 requests per second.
+Performance tests done using wrk and a medium class laptop resulted in handling 37000 requests per second. Enabling stdout logging may decrease such performance.
+
+```
+$ wrk -c 64 -d 30s http://localhost:8080/test/1
+Running 30s test @ http://localhost:8080/test/1
+  2 threads and 64 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     4.33ms   16.24ms 259.45ms   95.61%
+    Req/Sec    19.06k     6.77k   27.23k    78.28%
+  1129369 requests in 30.06s, 238.03MB read
+Requests/sec:  37567.43
+Transfer/sec:      7.92MB
+```
 
 ## Features implemented by Tinder
 

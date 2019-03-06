@@ -20,6 +20,9 @@ public class AppModule extends TinderModule {
     super(ImmutableTinderConfiguration.builder()
         // Add your configuration here...
         .httpStaticFilesLocation("/docs")
+        .httpSSLOnly(false)
+        .httpSSLKeystorePath(AppModule.class.getResource("/keystore.jks").toString())
+        .httpSSLKeystorePassword("changeit")
         .build());
   }
 

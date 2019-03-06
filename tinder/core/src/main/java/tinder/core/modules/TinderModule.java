@@ -24,6 +24,8 @@ import io.javalin.Context;
 import io.javalin.Javalin;
 import static java.util.Optional.of;
 import java.util.UUID;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,17 +74,23 @@ public class TinderModule {
     statsDClient = new NonBlockingStatsDClient(
         configuration.statsDPrefix(), configuration.statsDHost(), configuration.statsDPort());
 
+    // Always create javalin to avoid null pointers, even if we don't use it.
     javalin = Javalin.create().disableStartupBanner();
 
     // Start up http if enabled.
-    if (configuration.useHttp()) {
+    if (configuration.useServer()) {
+
       LOG.info(JAVALIN_PREFIX+"Starting Javalin...");
-      LOG.info(JAVALIN_PREFIX+"Using port {}", configuration.httpPort());
-      javalin.port(configuration.httpPort());
+      Server server = new JettyServerCreator(configuration).get();
+      configuration.httpServerConfigurator().accept(server);
+      javalin.server(() -> server);
+
       configuration.httpStaticFilesLocation().ifPresent(javalin::enableStaticFiles);
+
       // We always add the support for identifiable requests via the custom header
-      javalin.before(c -> { requestUUIDFilterBefore(); });
+      javalin.before(c -> { requestUUIDFilterBefore(c); });
       javalin.after(c -> { requestUUIDFilterAfter(c); });
+
       // Map the healthchecks
       if (configuration.useHealtCheckEndpoint()) {
         LOG.info(JAVALIN_PREFIX+"Adding /healthcheck");
@@ -134,9 +142,9 @@ public class TinderModule {
   /**
    * Adds the request UUID header in responses.
    */
-  static void requestUUIDFilterBefore() {
+  static void requestUUIDFilterBefore(Context ctx) {
     String uuid = UUID.randomUUID().toString();
-    MDC.put(MDC_REQUEST_UUID, uuid);
+    ctx.attribute(MDC_REQUEST_UUID, uuid);
     LOG.info(JAVALIN_PREFIX+"Start of request UUID filter for request: {}", uuid);
   }
 
@@ -144,10 +152,11 @@ public class TinderModule {
    * Adds the request UUID header in responses.
    */
   static void requestUUIDFilterAfter(Context ctx) {
-    String uuid = MDC.get(MDC_REQUEST_UUID);
+    String uuid = ctx.attribute(MDC_REQUEST_UUID);
     ctx.header(HEADER_TINDER_REQUEST_UUID, uuid);
     LOG.info(JAVALIN_PREFIX+"End of request UUID filter for request: {}", uuid);
     MDC.remove(MDC_REQUEST_UUID);
   }
+
 
 }

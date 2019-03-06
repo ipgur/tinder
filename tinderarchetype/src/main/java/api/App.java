@@ -34,18 +34,18 @@ public class App {
 
       // Add the extra parts after all endpoints are installed
 
-      AuthenticationResources ar = new AuthenticationResources(javalin, jdbi);
-
-      ar.upgradeByLiquibase();
-      ar.addRegisterResource();
-      ar.addJWTLoginResource( secret);
-
       healthCheckRegistry.register("jdbi", new APIHealthCheck(jdbi));
 
       AuthenticationFilter filter = new AuthenticationFilter(javalin, jdbi);
       filter.addJWTBasedFilter("/auth/*", secret);
 
       javalin.start();
+
+      AuthenticationResources ar = new AuthenticationResources(javalin, jdbi);
+
+      ar.upgradeByLiquibase();
+      ar.addRegisterResource();
+      ar.addJWTLoginResource(secret);
 
     } catch (LiquibaseException ex) {
       throw new RuntimeException(ex);

@@ -30,7 +30,7 @@ public class TinderConfigurationTest {
     TinderConfiguration configuration = ImmutableTinderConfiguration.builder()
         .build();
 
-    Assertions.assertEquals(true, configuration.useHttp());
+    Assertions.assertEquals(true, configuration.useServer());
     Assertions.assertEquals(8080, configuration.httpPort());
     Assertions.assertEquals("jdbi", configuration.jdbiInstanceName());
   }
