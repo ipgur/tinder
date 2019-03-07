@@ -18,26 +18,19 @@ package tinder.processors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import tinder.core.Resource;
-import tinder.core.ResourceEvents;
 
 /**
  *
  * @author Raffaele Ragni
  */
 @Resource
-public class ResourceProcessorTarget2 implements ResourceEvents {
+public class ResourceProcessorTargetBad {
 
   private String justAString;
 
   @GET
-  @Path("get2")
-  public void test2() {
-  }
-
-  @GET
-  @Path("get3")
-  public String test3() {
-    return "";
+  @Path("getNO")
+  public void test2(long id) { // no primitive allowed!
   }
 
 }

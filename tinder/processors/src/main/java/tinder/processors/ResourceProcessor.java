@@ -199,10 +199,6 @@ public class ResourceProcessor extends AbstractProcessor {
 
     CodeBlock.Builder result = CodeBlock.builder().indent();
 
-    if (method.getKind() != ElementKind.METHOD) {
-      return result.unindent().build();
-    }
-
     // Adding the binding here...
     // Type conversion is part of this.
     ExecutableType execType = (ExecutableType) method.asType();

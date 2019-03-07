@@ -33,6 +33,7 @@ public class ResourceProcessorTest {
 
     JavaFileObject tocompile1 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget1.java"));
     JavaFileObject tocompile2 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget2.java"));
+    JavaFileObject tocompilebad = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTargetBad.java"));
 
     Compilation compilation = javac()
         .withProcessors(new ResourceProcessor())
@@ -43,6 +44,11 @@ public class ResourceProcessorTest {
         .withProcessors(new ResourceProcessor())
         .compile(tocompile2);
     assertTrue(compilation.status() == Compilation.Status.SUCCESS);
+
+    compilation = javac()
+        .withProcessors(new ResourceProcessor())
+        .compile(tocompilebad);
+    assertTrue(compilation.status() == Compilation.Status.FAILURE);
   }
 
 }

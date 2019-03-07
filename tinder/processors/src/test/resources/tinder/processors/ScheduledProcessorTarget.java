@@ -32,4 +32,8 @@ public class ScheduledProcessorTarget {
     System.out.println("give me one second...");
   }
 
+  @PeriodicallyScheduled(waitBeforeRestart = false, immediateStart = false, value = 1)
+  public void oneSecond2() {
+    System.out.println("give me one second...");
+  }
 }
