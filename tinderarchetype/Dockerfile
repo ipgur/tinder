@@ -4,6 +4,9 @@ FROM adoptopenjdk/openjdk11-openj9
 HEALTHCHECK --interval=1m --timeout=10s \
   CMD curl -f http://localhost:8080/healthcheck || exit 1
 
-ADD target/app.jar /app.jar
+RUN mkdir /app
+ADD target/lib/ /app/lib
+ADD target/original-app.jar /app/app.jar
+WORKDIR /app
 
-CMD java -jar /app.jar
+CMD java -jar app.jar
