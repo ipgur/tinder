@@ -73,6 +73,12 @@ public class AuthenticationFilterDBTest {
       AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
     });
 
+    // Test with null header
+    when(ctx.header("Authorization")).thenReturn(null);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);
+    });
+
     // Tes skippping of login endpoint
     when(ctx.path()).thenReturn("/login");
     AuthenticationFilter.authenticateDatabaseFilter(jdbi, empty(), ctx);

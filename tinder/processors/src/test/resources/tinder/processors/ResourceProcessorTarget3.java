@@ -15,26 +15,29 @@
  */
 package tinder.processors;
 
+import io.javalin.Context;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import tinder.core.Resource;
+import tinder.core.ResourceEvents;
 
 /**
  *
  * @author Raffaele Ragni
  */
 @Resource
-@Path("")
-public class ResourceProcessorTarget2 {
+public class ResourceProcessorTarget3 implements ResourceEvents {
+
+  private String justAString;
 
   @GET
   @Path("get2")
-  public void test2() {
+  public void test2(String param1, Context ctx) {
   }
 
   @GET
-  @Path("/get3")
-  public String test3() {
+  @Path("get3")
+  public String test3(Context ctx) {
     return "";
   }
 

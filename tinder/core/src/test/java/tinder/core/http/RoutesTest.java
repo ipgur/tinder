@@ -89,8 +89,7 @@ public class RoutesTest {
 
     // We actually want to test that even with providing a wrong path and password, until the actual startup happens
     // nothing throws an error.
-
-    new JettyServerCreator(ImmutableTinderConfiguration.builder()
+    new TinderModule(ImmutableTinderConfiguration.builder()
         .httpSSLOnly(false)
         .httpSSLKeystorePath("a")
         .httpSSLKeystorePassword("b")
@@ -98,6 +97,10 @@ public class RoutesTest {
         .useHealtCheckEndpoint(false)
         .build());
 
+    // Test with no server
+    new TinderModule(ImmutableTinderConfiguration.builder()
+        .useServer(false)
+        .build());
   }
 
 }

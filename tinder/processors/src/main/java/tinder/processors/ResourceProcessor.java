@@ -79,11 +79,7 @@ public class ResourceProcessor extends AbstractProcessor {
     for (TypeElement annotation : annotations) {
       Set<? extends Element> elements = env.getElementsAnnotatedWith(annotation);
       for (Element element : elements) {
-        try {
-          generateRESTFor(element);
-        } catch (IOException ex) {
-          Logger.getLogger(ResourceProcessor.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        try { generateRESTFor(element); } catch (IOException ex) { Logger.getLogger(ResourceProcessor.class.getName()).log(Level.SEVERE, null, ex); }
       }
     }
 

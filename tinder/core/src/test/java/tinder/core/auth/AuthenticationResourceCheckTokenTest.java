@@ -72,6 +72,12 @@ public class AuthenticationResourceCheckTokenTest {
     Assertions.assertThrows(HttpResponseException.class, () -> {
       AuthenticationResources.checkToken(jdbi, ctx);
     });
+
+    // Test with null header
+    when(ctx.header("Authorization")).thenReturn(null);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationResources.checkToken(jdbi, ctx);
+    });
   }
 
   public static void addToken(Jdbi jdbi, String token, long deltaTime) {

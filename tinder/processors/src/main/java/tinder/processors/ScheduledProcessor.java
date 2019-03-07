@@ -58,11 +58,7 @@ public class ScheduledProcessor extends AbstractProcessor {
     for (TypeElement annotation : annotations) {
       Set<? extends Element> elements = env.getElementsAnnotatedWith(annotation);
       for (Element element : elements) {
-        try {
-          generateSchedulerFor(element);
-        } catch (IOException ex) {
-          Logger.getLogger(ScheduledProcessor.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        try { generateSchedulerFor(element); } catch (IOException ex) { Logger.getLogger(ScheduledProcessor.class.getName()).log(Level.SEVERE, null, ex); }
       }
     }
 

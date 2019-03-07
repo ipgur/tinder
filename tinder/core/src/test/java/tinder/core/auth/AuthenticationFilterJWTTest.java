@@ -97,6 +97,13 @@ public class AuthenticationFilterJWTTest {
           empty(), ctx);
     });
 
+    // Test with null header
+    when(ctx.header(any())).thenReturn(null);
+    Assertions.assertThrows(HttpResponseException.class, () -> {
+      AuthenticationFilter.authenticateJTWFilter(new BigInteger(500, random).toString(32),
+          empty(), ctx);
+    });
+
     // Thest the skipping of filtering
     when(ctx.path()).thenReturn("/login");
     AuthenticationFilter.authenticateJTWFilter(secret, empty(), ctx);

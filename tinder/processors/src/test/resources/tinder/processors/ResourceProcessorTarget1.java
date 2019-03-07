@@ -56,7 +56,7 @@ public class ResourceProcessorTarget1 {
   }
 
   @PATCH
-  @Path("/raw2")
+  @Path("raw2")
   public void raw2(Context ctx) {
 
   }
