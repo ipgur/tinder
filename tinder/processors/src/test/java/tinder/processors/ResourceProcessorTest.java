@@ -31,18 +31,18 @@ public class ResourceProcessorTest {
   @Test
   public void testResourceProcessor() {
 
-  JavaFileObject tocompile1 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget1.java"));
-  JavaFileObject tocompile2 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget2.java"));
+    JavaFileObject tocompile1 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget1.java"));
+    JavaFileObject tocompile2 = JavaFileObjects.forResource(ResourceProcessorTest.class.getResource("ResourceProcessorTarget2.java"));
 
-  Compilation compilation = javac()
-      .withProcessors(new ResourceProcessor())
-      .compile(tocompile1);
-  assertTrue(compilation.status() == Compilation.Status.SUCCESS);
+    Compilation compilation = javac()
+        .withProcessors(new ResourceProcessor())
+        .compile(tocompile1);
+    assertTrue(compilation.status() == Compilation.Status.SUCCESS);
 
-  compilation = javac()
-      .withProcessors(new ResourceProcessor())
-      .compile(tocompile2);
-  assertTrue(compilation.status() == Compilation.Status.SUCCESS);
+    compilation = javac()
+        .withProcessors(new ResourceProcessor())
+        .compile(tocompile2);
+    assertTrue(compilation.status() == Compilation.Status.SUCCESS);
   }
 
 }

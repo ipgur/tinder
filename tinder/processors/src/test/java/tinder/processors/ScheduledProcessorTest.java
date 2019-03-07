@@ -31,12 +31,12 @@ public class ScheduledProcessorTest {
   @Test
   public void testScheduledProcessor() {
 
-  JavaFileObject tocompile = JavaFileObjects.forResource(
-      ScheduledProcessorTest.class.getResource("ScheduledProcessorTarget.java"));
-  Compilation compilation = javac()
-      .withProcessors(new ScheduledProcessor())
-      .compile(tocompile);
-  assertTrue(compilation.status() == Compilation.Status.SUCCESS);
+    JavaFileObject tocompile = JavaFileObjects.forResource(
+        ScheduledProcessorTest.class.getResource("ScheduledProcessorTarget.java"));
+    Compilation compilation = javac()
+        .withProcessors(new ScheduledProcessor())
+        .compile(tocompile);
+    assertTrue(compilation.status() == Compilation.Status.SUCCESS);
   }
 
 }
