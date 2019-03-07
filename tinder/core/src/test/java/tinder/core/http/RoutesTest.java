@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import tinder.core.auth.AuthenticationFilter;
 import tinder.core.auth.AuthenticationResources;
 import tinder.core.modules.ImmutableTinderConfiguration;
+import tinder.core.modules.JettyServerCreator;
 import tinder.core.modules.TinderConfiguration;
 import tinder.core.modules.TinderModule;
 
@@ -86,5 +87,17 @@ public class RoutesTest {
     ar2.addJWTLoginResource("seekrit");
     ar2.addJWTLoginResource("seekrit", "/my-jwt-login");
 
+    // We actually want to test that even with providing a wrong path and password, until the actual startup happens
+    // nothing throws an error.
+
+    new JettyServerCreator(ImmutableTinderConfiguration.builder()
+        .httpSSLOnly(false)
+        .httpSSLKeystorePath("a")
+        .httpSSLKeystorePassword("b")
+        .useJmxMetrics(false)
+        .useHealtCheckEndpoint(false)
+        .build());
+
   }
+
 }
