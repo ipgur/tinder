@@ -26,7 +26,7 @@ It relies on source code generation, and inert runtimes. What does that mean? Ti
 * Check out this repository,
 * do a `./mvnw install` from the `tinder` folder
 * do a `./mvnw package` from the `tinderarchetype` folder
-* run the sample with `java -jar target/app.jar` from the `tinderarchetype` folder.
+* run the sample with `java -jar target/original-app.jar` from the `tinderarchetype` folder.
 * alternatively you can start it up via docker `docker run -it --rm -p 8080:8080 archetype/tinder-archetype:1.1-SNAPSHOT`
 * open browser on http://localhost:8080/ (if httpSSLOnly(false)) or https://localhost:8443/
 * Eventually you should provide your own keystore.jks for SSL
