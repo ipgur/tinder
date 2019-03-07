@@ -61,7 +61,7 @@ Transfer/sec:      7.92MB
 On the APT processors:
  * @Scheduling on top of a class that needs periodic activation
    * @PeriodicallyScheduled on the method that needs to be periodically scheduled
- * JAX-RS annotations that bind to Sparkjava, Supported annotations are:
+ * JAX-RS annotations that bind to javalin, Supported annotations are:
    * @Resource to mark a resource, this annotation comes from tinder.
    * @Path
    * @GET, @POST, @PUT, @PATCH, @DELETE
@@ -70,7 +70,7 @@ On the APT processors:
 
 On the configuration:
  * Extend the TinderModule as shown in the archetype,
- * Configuring some sparkjava parameters + https
+ * Configuring some javalin parameters + https
  * Setup of a jdbi instance by default
  * Setup for /healthcheck endpoint
  * Implementations available for authentication filtering and endpoints (/register, /login, /checktoken) and JWT choice of implementation.
@@ -85,21 +85,21 @@ Not all annotations are supported, see the list above.
 @Resource
 @Path("/")
 public class Example {
-  public Example() {
+  @Inject public Example(Javalin javalin) {
     // This is the binding of the resource, you can decide to do it in different manners
     // here we choose to go via constructor just for simplicity of the example.
     // ResourceExample is the generated class via APT, they are in the form of Resource<name>
-    ResourceExample.bind(this);
+    ResourceExample.bind(javalin, this);
   }
   @POST
   @Path("/echo/{v}")
   public String echo(String input, @PathParam("v") Integer v) {
     return input + v;
   }
-  // You can also use Spark Request/Response directly, they will be recognized and passed as is.
+  // You can also use javalin Context directly, they will be recognized and passed as is.
   @PUT
   @Path("/raw")
-  public String raw(Request req, Response resp) {
+  public String raw(Context ctx) {
     return "";
   }
 }
@@ -110,20 +110,21 @@ Setting up authentication filters, endpoints and a healtcheck.
 ```java
   public static void main(String[] args) {
     ...
-
+    AuthenticationResources ar = new AuthenticationResources(javalin, jdbi);
     // using liquibase to create/update database tables.
     // not needed normally if you manage them yourself.
-    AuthenticationResources.upgradeByLiquibase(jdbi);
+    ar.upgradeByLiquibase();
 
+    // add the /register
+    ar.addRegisterResource();
+    // add the /login
+    ar.addJWTLoginResource(secret);
+
+    AuthenticationFilter filter = new AuthenticationFilter(javalin, jdbi);
     // specifying a path that needs authentication
     // since the /register and /login endpoints are in the root, it's best if
     // you do not use a root wildcard, even if the class knows how to ignore them.
-    AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
-
-    // add the /register
-    AuthenticationResources.addRegisterResource(jdbi);
-    // add the /login
-    AuthenticationResources.addJWTLoginResource(jdbi, secret);
+    filter.addJWTBasedFilter("/auth/*", secret);
 
     // A custom healthcheck (APIHealthCheck is custom, not part of tinder core)
     healthCheckRegistry.register("jdbi", new APIHealthCheck(jdbi));
@@ -149,23 +150,23 @@ JWT setup:
 ```java
 // Upgrade/create the database tables required by authentication.
 // Uses liquibase, only incremental changes.
-AuthenticationResources.upgradeByLiquibase(jdbi);
+authenticationResources.upgradeByLiquibase();
 
 // Add a filter on /auth/* (best not use /* for exclusion reasons)
 // This is a JWT filter, all it needs is the secret to verify the signature.
-AuthenticationFilter.addJWTBasedFilter("/auth/*", secret);
+authenticationFilter.addJWTBasedFilter("/auth/*", secret);
 
 // Add a /register resource POST that needs a {"email": "...", "password": "..."}
 // you can pass a function that will receive the generated confirmation code and send
 // it to the user via mail / use the consumer signature
-AuthenticationResources.addRegisterResource(jdbi, confirmationCode -> ... send email to user...);
+authenticationResources.addRegisterResource(confirmationCode -> ... send email to user...);
 
 // Or use no consumer function, but then that means NO confirmation flow is enabled!
-AuthenticationResources.addRegisterResource(jdbi);
+authenticationResources.addRegisterResource();
 
 // Setup a /login endpoint, same data as register, that returns a JWT token.
 // JWT tokens are 30 minutes valid by default
-AuthenticationResources.addJWTLoginResource(jdbi, secret);
+authenticationResources.addJWTLoginResource(secret);
 
 ...
 
@@ -183,17 +184,17 @@ Alternative UUID token based:
 
 ```java
 // Filter checks in DB directly for token
-AuthenticationFilter.addDatabaseBasedFilter(jdbi, "/auth/*");
+authenticationFilter.addDatabaseBasedFilter("/auth/*");
 // Login returns UUID token directly
-AuthenticationResources.addLoginResource(jdbi);
+authenticationResources.addLoginResource();
 ```
 
 Alternative using remote API
 ```java
 // On the remote api
-AuthenticationResources.addCheckTokenResource(jdbi);
+authenticationResources.addCheckTokenResource();
 // On your api
-AuthenticationFilter.addAPIBasedFilter("/auth/*", "https://your.login.api/checktoken");
+authenticationFilter.addAPIBasedFilter("/auth/*", "https://your.login.api/checktoken");
 ```
 
 In case of filters, the user is stored in `req.attribute(AuthenticationResources.REQ_EMAIL)`.
@@ -261,7 +262,13 @@ How to setup the instance / component? That is shown in the AppModule:
 public class AppModule extends TinderModule {
 
   public AppModule() {
-    super(ImmutableTinderConfiguration.builder().build());
+    super(ImmutableTinderConfiguration.builder()
+      // Add your configuration here...
+      .httpStaticFilesLocation("/docs")
+      .httpSSLOnly(false)
+      .httpSSLKeystorePath(AppModule.class.getResource("/keystore.jks").toString())
+      .httpSSLKeystorePassword("changeit")
+      .build());
   }
 
   @Provides
@@ -269,6 +276,14 @@ public class AppModule extends TinderModule {
   public HealthCheckRegistry getHealthCheckRegistry() {
     return healthCheckRegistry();
   }
+
+  @Provides
+  @Singleton
+  public Javalin getJavalin() {
+    return javalin();
+  }
+  
+  ...
 }
 ```
 
