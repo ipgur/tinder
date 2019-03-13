@@ -15,6 +15,7 @@
 /tinder/nb-configuration.xml
 /tinder/patterns/nb-configuration.xml
 /tinderarchetype/nb-configuration.xml
+/tinderarchetype/src/main/resources/docs/swagger.yaml
 *.iml
 *.idea
 .project
