@@ -230,7 +230,7 @@ public class ResourceProcessor extends AbstractProcessor {
       } else if (queryParam != null) {
         blockStrings.addStatement("$T str$L = $L.queryParam($S)", String.class, name, PARAM_CTX, queryParam.value());
       } else if (pathParam != null) {
-        blockStrings.addStatement("$T str$L = $L.pathParam($S)", String.class, name, PARAM_CTX, ":" + pathParam.value());
+        blockStrings.addStatement("$T str$L = $L.pathParam($S)", String.class, name, PARAM_CTX, pathParam.value());
       } else {
         // No annotation, we go from body. There should be only one of these.
         blockStrings.addStatement("$T str$L = $L.body()", String.class, name, PARAM_CTX);
