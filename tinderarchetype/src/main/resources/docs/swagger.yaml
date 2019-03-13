@@ -75,3 +75,16 @@ paths:
 definitions:
   ImmutableBean:
     type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int64"
+        readOnly: true
+      length:
+        type: "integer"
+        format: "int64"
+        readOnly: true
