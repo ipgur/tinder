@@ -41,12 +41,12 @@
   </appender>
 
   <!-- API is in debug, your own api -->
-  <logger name="api" level="INFO" additivity="false">
+  <logger name="api" level="WARN" additivity="false">
     <appender-ref ref="STDOUT" />
   </logger>
 
   <!-- Tinder itself is in info -->
-  <logger name="tinder" level="INFO" additivity="false">
+  <logger name="tinder" level="WARN" additivity="false">
     <appender-ref ref="STDOUT" />
   </logger>
 
