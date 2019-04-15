@@ -139,7 +139,7 @@ The recommended implementation to use is JWT, as it does not require databse loo
 At the current moment JTW is best used in the monolythic setup, that is, you have one api with register & login also in the same API.
 You could setup JWT via satellite, but then it needs to be setup with the same secret across all APIs using it.
 
-JWT secret can be changed in case of breach with little consequance: all it means upon change / restart of the APIs is just that tokens need to be reacquired.
+JWT secret can be changed in case of breach with little consequance: all it means upon change / restart of the APIs is just that tokens need to be reaquired.
 
 One alternative is to use UUID generated tokens. Those are done via SecureRandom (java implementation) and they are random enough for
 security purposes. This means that your filter (API kind of filter) will query the 'central' auth api where the /checktoken is.
@@ -282,7 +282,7 @@ public class AppModule extends TinderModule {
   public Javalin getJavalin() {
     return javalin();
   }
-  
+
   ...
 }
 ```
@@ -348,3 +348,11 @@ Then using it:
     });
   }
 ```
+
+## Note: Why the name Tinder
+
+Initially Tinder was using Sparkjava as a container. The name was directly related to tinder and spark words, seems self explanatory. I only realized later there are already platforms or projects with such name. But after all, nowadays you can't name anything originally anymore. Later on Tinder moved to Javalin because that's what Sparkjava evolved into. It was a little hard to follow such eovlution as it was mentioned mostly on github issues that Javalin is the Sparkjava '3' reimplementation.
+
+Nevertheless, the name still remains as the group/artifact ids are now uploaded, but since I were asked more than once about the origin of the name, I thought it would make sense to write this down.
+
+RR
