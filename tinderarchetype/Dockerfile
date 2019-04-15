@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11-openj9
+FROM adoptopenjdk/openjdk12-openj9
 
 # change this if your port changes too or if protocol becomes https
 HEALTHCHECK --interval=1m --timeout=10s \
