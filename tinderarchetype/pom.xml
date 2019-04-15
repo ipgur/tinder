@@ -22,7 +22,7 @@
 
     <docker.image>${project.groupId}/${project.artifactId}</docker.image>
 
-    <version.tinder>1.8-SNAPSHOT</version.tinder>
+    <version.tinder>1.9-SNAPSHOT</version.tinder>
 
   </properties>
 
