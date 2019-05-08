@@ -18,10 +18,14 @@ package tinder.core.modules;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 import io.javalin.Context;
 import io.javalin.Javalin;
+import io.javalin.json.JavalinJackson;
 import static java.util.Optional.of;
 import java.util.UUID;
 import org.eclipse.jetty.server.Server;
@@ -72,6 +76,12 @@ public class TinderModule {
     LOG.info(METRICS_PREFIX+"Initializing statsd client...");
     statsDClient = new NonBlockingStatsDClient(
         configuration.statsDPrefix(), configuration.statsDHost(), configuration.statsDPort());
+
+    // Add some defaults to jackson behaviour since it has some breaking functionality on missing properties or nulls
+    // These settings will make the api more extensible without breaking clients, when they adhere to these rules.
+    ObjectMapper jacksonObjectMapper = JavalinJackson.getObjectMapper();
+    jacksonObjectMapper.setSerializationInclusion(Include.NON_NULL);
+    jacksonObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // Always create javalin to avoid null pointers, even if we don't use it.
     javalin = Javalin.create().disableStartupBanner();
