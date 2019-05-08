@@ -25,7 +25,6 @@ import io.javalin.Javalin;
 import static java.util.Optional.of;
 import java.util.UUID;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class TinderModule {
 
   public static final String MDC_REQUEST_UUID = "request_uuid";
 
-  public static final String HEADER_TINDER_REQUEST_UUID = "X-Tinder-RequestUUID";
+  public static final String HEADER_TINDER_REQUEST_UUID = "X-Request-ID";
 
   private static final String JAVALIN_PREFIX = "Javalin :: ";
   private static final String METRICS_PREFIX = "Metrics :: ";
